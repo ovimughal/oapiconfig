@@ -1,0 +1,32 @@
+{
+    "name": "ovimughal/oapiconfig",
+    "description": "ZF3 REST api/microframework/config/JWT Auth/ACL",
+    "license": "MIT",
+    "type": "tool",
+    "keywords": [
+        "zf3 REST API",
+        "Zend framework 3 Rest Api",
+        "Api",
+	"jwt",
+	"Rest config"
+    ],
+    "homepage": "https://github.com/ovimughal/oapiconfig",
+    "authors": [
+        {
+            "name": "Owais Mughal",
+            "email": "ovi.mughal@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^5.6 || ^7.0",
+        "doctrine/doctrine-orm-module": "^1.1",
+        "firebase/php-jwt": "^4.0",
+        "zendframework/zend-json": "^3.0",
+        "zendframework/zend-permissions-acl": "^2.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "Oapiconfig\\": "src/"
+        }
+    }
+}
