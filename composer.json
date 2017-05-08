@@ -22,7 +22,8 @@
         "doctrine/doctrine-orm-module": "^1.1",
         "firebase/php-jwt": "^4.0",
         "zendframework/zend-json": "^3.0",
-        "zendframework/zend-permissions-acl": "^2.6"
+        "zendframework/zend-permissions-acl": "^2.6",
+	"ovimughal/zf3-module-creator": "dev-master"
     },
     "autoload": {
         "psr-4": {
