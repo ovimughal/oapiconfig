@@ -9,6 +9,7 @@
 namespace Oapiconfig\Factories;
 
 use Interop\Container\ContainerInterface;
+use Oapiconfig\Services\OhydrationService;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -25,7 +26,7 @@ class OhydrationFactory implements FactoryInterface
     }
 
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null) {
-        return new OhydrationService($serviceLocator);
+        return new OhydrationService($container);
     }
 
 }
