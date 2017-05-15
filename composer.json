@@ -2,7 +2,7 @@
     "name": "ovimughal/oapiconfig",
     "description": "ZF3 REST api/microframework/config/JWT Auth/ACL",
     "license": "MIT",
-    "type": "tool",
+    "type": "framework",
     "keywords": [
         "zf3 REST API",
         "Zend framework 3 Rest Api",
