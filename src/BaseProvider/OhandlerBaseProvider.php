@@ -29,7 +29,7 @@ class OhandlerBaseProvider extends OBaseProvider
     {
         self::setSuccess(true);
         self::setMsg('Executed Successfully');
-        self::setData([]);
+        self::setData((object) null);
     }
 
     public static function resetHandler()
@@ -74,7 +74,7 @@ class OhandlerBaseProvider extends OBaseProvider
             'msg' => self::getMsg(),
             'data' => self::getData()
         ];
-        
+
         self::resetHandler();
         return $result;
     }

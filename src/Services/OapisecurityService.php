@@ -31,11 +31,11 @@ class OapisecurityService extends OapisecurityServiceBaseProvider
             list($api_key) = sscanf($authHeader->toString(), 'X-Api-Key: %s');
             if ($api_key != $this->getApiKey()) {
                 $flag = false;
-                $res->setStatusCode(402); //Payment Required :)            
+                $res->setStatusCode(402); //Payment Required :)
                 $jsonModel->setVariables([
                     'success' => false,
                     'msg' => 'Inavlid Api Key',
-                    'data' => [],
+                    'data' => (object) null,
                 ]);
             }
         } else {
@@ -44,7 +44,7 @@ class OapisecurityService extends OapisecurityServiceBaseProvider
             $jsonModel->setVariables([
                 'success' => false,
                 'msg' => 'No Api Key',
-                'data' => [],
+                'data' => (object) null,
             ]);
         }
 

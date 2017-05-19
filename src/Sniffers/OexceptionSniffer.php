@@ -17,6 +17,7 @@ use Oapiconfig\BaseProvider\OhandlerBaseProvider;
  */
 class OexceptionSniffer extends OhandlerBaseProvider
 {
+
     public static function exceptionScanner($result)
     {
         if (is_a($result, 'Exception')) {
@@ -28,7 +29,12 @@ class OexceptionSniffer extends OhandlerBaseProvider
             parent::setSuccess(false);
             parent::setMsg('An Exception Occured');
         }
-        
+
+        if (!count($result)) {
+            $result = (object) null;
+        }
+
         return $result;
     }
+
 }

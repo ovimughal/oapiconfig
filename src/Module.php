@@ -11,8 +11,10 @@
 namespace Oapiconfig;
 
 use Zend\Mvc\MvcEvent;
+
 class Module
 {
+
     const VERSION = '3.0.3-dev';
 
     public function getConfig()
@@ -39,10 +41,10 @@ class Module
         // application
         $eventManager = $e->getApplication()->getEventManager();
         $eventManager->attach('route', array($this, 'loadConfiguration'), 1000);
-         //$moduleRouteListener = new ModuleRouteListener();
-         //$moduleRouteListener->attach($eventManager);
+        //$moduleRouteListener = new ModuleRouteListener();
+        //$moduleRouteListener->attach($eventManager);
         $eventManager->attach(MvcEvent::EVENT_DISPATCH, array($this, 'authorizationScanner'));
-       //$eventManager->attach(MvcEvent::EVENT_FINISH, array($this, 'thePileDriver'));
+        //$eventManager->attach(MvcEvent::EVENT_FINISH, array($this, 'thePileDriver'));
     }
 
     public function loadConfiguration(MvcEvent $e)
@@ -72,7 +74,7 @@ class Module
             if ('api' === $pathFragments[0]) {
                 $res = $sm->get('response');
                 $res->getHeaders()->addHeaderLine('Content-Type', 'application/json');
-                $res->setContent(json_encode(['success' => false, 'msg' => 'Method Not Found', 'data' =>[]]));
+                $res->setContent(json_encode(['success' => false, 'msg' => 'Page Not Found', 'data' => (object) null]));
                 return $res->setStatusCode(404);
             }
         }
@@ -80,19 +82,17 @@ class Module
 
     public function authorizationScanner($e)
     {
-        if(405 == $e->getResponse()->getStatusCode()){
+        if (405 == $e->getResponse()->getStatusCode()) {
             $e->getResponse()->getHeaders()->addHeaderLine('Content-Type', 'application/json');
-            $e->getResponse()->setContent(json_encode(['success' => false, 'msg' => 'Method Not Found', 'data' =>[]]));
+            $e->getResponse()->setContent(json_encode(['success' => false, 'msg' => 'Method Not Found', 'data' => (object) null]));
             $e->stopPropagation();
             return $e->getResponse();
-        }
-        else if(404 == $e->getResponse()->getStatusCode()){
+        } else if (404 == $e->getResponse()->getStatusCode()) {
             $e->getResponse()->getHeaders()->addHeaderLine('Content-Type', 'application/json');
-            $e->getResponse()->setContent(json_encode(['success' => false, 'msg' => 'Page Not Found', 'data' =>[]]));
+            $e->getResponse()->setContent(json_encode(['success' => false, 'msg' => 'Page Not Found', 'data' => (object) null]));
             $e->stopPropagation();
             return $e->getResponse();
-        }
-        else if (200 != $e->getResponse()->getStatusCode()) {
+        } else if (200 != $e->getResponse()->getStatusCode()) {
             $e->getResponse()->getHeaders()->addHeaderLine('Content-Type', 'application/json');
             $e->stopPropagation();
             return $e->getResponse();
@@ -125,7 +125,7 @@ class Module
 //        $oJwtizer = DI\ServiceInjector::oJwtizer();
 //        $oJwt = $oJwtizer->getOjwt();
 //        $oJwtExpire = $oJwtizer->getOjwtExpire();
-//        
+//
 //        $res = $sm->get('response');
 //
 //        if (null != $oJwt) {
