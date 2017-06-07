@@ -80,6 +80,7 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         } catch (Exception $exc) {
             $this->setSuccess(false);
             $result = $exc;
+            throw new Exception($exc);
         }
 
         return $result;
@@ -95,12 +96,13 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         } catch (Exception $exc) {
             $this->setSuccess(false);
             $result = $exc;
+            throw new Exception($exc);
         }
-        
+
         return $result;
     }
 
-    public function queryResultCheck($queryResult,$errMsg = null)
+    public function queryResultCheck($queryResult, $errMsg = null)
     {
         if (!count($queryResult)) {
             $msg = null == $errMsg ? 'Result Not Found' : $errMsg;
@@ -110,6 +112,11 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         }
 
         return $queryResult;
+    }
+
+    public function update($dql, $paramsArr, $errMsg = null)
+    {
+        $this->select($dql, $paramsArr, $errMsg);
     }
 
 }

@@ -10,21 +10,25 @@ use Zend\Permissions\Acl\Acl;
 use Zend\Permissions\Acl\Role\GenericRole as Role;
 use Zend\View\Model\JsonModel;
 
-class OaclService extends OmodelBaseProvider {
+class OaclService extends OmodelBaseProvider
+{
 
     private $role;
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $userInfo = ServiceInjector::oJwtizer()->getUserInfo();
         $this->setRole($userInfo['role']);
     }
 
-    public function setRole($role) {
+    public function setRole($role)
+    {
         $this->role = $role;
     }
 
-    public function getRole() {
+    public function getRole()
+    {
         return isset($this->role) ? $this->role : 'Admin';
     }
 
@@ -38,7 +42,6 @@ class OaclService extends OmodelBaseProvider {
 //
 //        return $result;
 //    }
-
 //    public function resourceDump() {
 //        try {
 //            $acl = new Acl();
@@ -80,7 +83,8 @@ class OaclService extends OmodelBaseProvider {
 //        return $acl;
 //    }
 
-    public function resourceDump() {
+    public function resourceDump()
+    {
         $resources = $this->getOconfigManager()['resources'];
         $userRoles = $this->getOconfigManager()['userRoles'];
         $allowList = $this->getOconfigManager()['allowList'];
@@ -99,7 +103,8 @@ class OaclService extends OmodelBaseProvider {
         return $acl;
     }
 
-    public function resourceLoader($acl, $userRoles, $resources, $allowList) {
+    public function resourceLoader($acl, $userRoles, $resources, $allowList)
+    {
         foreach ($userRoles as $role) {
             $acl->addRole(new Role($role));
         }
@@ -107,11 +112,16 @@ class OaclService extends OmodelBaseProvider {
             $acl->addResource($resource);
         }
         foreach ($allowList as $allowed) {
-            $this->methodCheck($acl, $allowed);
+            if (is_array($allowed['role'])) {
+                $this->roleCheck($acl, $allowed);
+            } else {
+                $this->methodCheck($acl, $allowed);
+            }
         }
     }
 
-    public function methodCheck($acl, $allowed) {
+    public function methodCheck($acl, $allowed)
+    {
         if (is_array($allowed['method'])) {
             foreach ($allowed['method'] as $method) {
                 $acl->allow($allowed['role'], $allowed['module'], $allowed['controller'] . ':' . $method);
@@ -121,7 +131,16 @@ class OaclService extends OmodelBaseProvider {
         }
     }
 
-    public function authorizationCheck($e) {
+    public function roleCheck($acl, $allowed)
+    {
+        foreach ($allowed['role'] as $role) {
+            $allowed['role'] = $role;
+            $this->methodCheck($acl, $allowed);
+        }
+    }
+
+    public function authorizationCheck($e)
+    {
         $res = $e->getResponse();
         $allowed = true;
         try {
@@ -146,7 +165,8 @@ class OaclService extends OmodelBaseProvider {
         return $res;
     }
 
-    public function requestAnalyzer($e) {
+    public function requestAnalyzer($e)
+    {
         $controllerTarget = $e->getTarget();
         $controllerClass = get_class($controllerTarget);
         $moduleName = strtolower(substr($controllerClass, 0, strpos($controllerClass, '\\')));
