@@ -78,7 +78,7 @@ class OmodelBaseProvider extends OhandlerBaseProvider
 
             $result = ['_id' => $lastInsertId]; //['_id' => $lastInsertId, 'msg' => 'success'];
         } catch (Exception $exc) {
-            $this->setSuccess(false);
+            parent::setSuccess(false);
             $result = $exc;
             throw new Exception($exc);
         }
@@ -86,15 +86,18 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         return $result;
     }
 
-    public function select($dql, $paramsArr, $errMsg = null)
+    public function select($dql, $paramsArr, $errMsg = null, $limit = null)
     {
         try {
             $query = $this->getDoctObjMngr()->createQuery($dql);
             $query->setParameters($paramsArr);
+            if(null != $limit){
+                $query->setMaxResults($limit);
+            }
             $queryResult = $query->getArrayResult();
             $result = $this->queryResultCheck($queryResult, $errMsg);
         } catch (Exception $exc) {
-            $this->setSuccess(false);
+            parent::setSuccess(false);
             $result = $exc;
             throw new Exception($exc);
         }
@@ -104,10 +107,14 @@ class OmodelBaseProvider extends OhandlerBaseProvider
 
     public function queryResultCheck($queryResult, $errMsg = null)
     {
-        if (!count($queryResult)) {
+        if (!count($queryResult) || 0 == $queryResult) {
             $msg = null == $errMsg ? 'Result Not Found' : $errMsg;
-            $this->setSuccess(false);
-            $this->setMsg($msg);
+            
+            /*commented, since return result is empty but the query is 
+             * still valid. It is just it returns empty so success can't be false.
+             */
+           // $this->setSuccess(false);           
+           parent::setMsg($msg);
             $queryResult = [];
         }
 
@@ -116,7 +123,7 @@ class OmodelBaseProvider extends OhandlerBaseProvider
 
     public function update($dql, $paramsArr, $errMsg = null)
     {
-        $this->select($dql, $paramsArr, $errMsg);
+        return $this->select($dql, $paramsArr, $errMsg);
     }
 
 }

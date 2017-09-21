@@ -22,9 +22,9 @@ class OvalidationSniffer extends OhandlerBaseProvider
     {
         $res = false;
         if (is_array($data)) {
-            foreach ($data as $val) {
+            foreach ($data as $key => $val) {
                 if ('' == $val) {
-                    $emptyData[] = $val;
+                    $emptyData[] = $key;
                     $res = true;
                     parent::setSuccess(false);
                     parent::setMsg(json_encode($emptyData) . ' Cannot Be Empty But Required Fields Are Empty');
@@ -43,7 +43,7 @@ class OvalidationSniffer extends OhandlerBaseProvider
 
     public static function isEmail($dataArr)
     {
-
+        
     }
 
     public static function isInt($dataList, $ignoreListRaw = null)
@@ -52,12 +52,16 @@ class OvalidationSniffer extends OhandlerBaseProvider
 
         if (is_array($dataList)) {
 
-            $ignoreList = array_flip($ignoreListRaw);
-            $data = array_diff_key($dataList, $ignoreList);
+            if (null != $ignoreListRaw) {
+                $ignoreList = array_flip($ignoreListRaw);
+                $data = array_diff_key($dataList, $ignoreList);
+            } else {
+                $data = $dataList;
+            }
 
-            foreach ($data as $val) {
+            foreach ($data as $key => $val) {
                 if (!is_int($val)) {
-                    $notInt[] = $val;
+                    $notInt[] = $key;
                     $flag = false;
                     parent::setSuccess(false);
                     parent::setMsg(json_encode($notInt) . ' Need To be Integer But Invalid Integer Supplied');
@@ -79,13 +83,17 @@ class OvalidationSniffer extends OhandlerBaseProvider
         $flag = true;
 
         if (is_array($dataList)) {
+            
+            if (null != $ignoreListRaw) {
+                $ignoreList = array_flip($ignoreListRaw);
+                $data = array_diff_key($dataList, $ignoreList);
+            } else {
+                $data = $dataList;
+            }
 
-            $ignoreList = array_flip($ignoreListRaw);
-            $data = array_diff_key($dataList, $ignoreList);
-
-            foreach ($data as $val) {
+            foreach ($data as $key => $val) {
                 if (!is_numeric($val)) {
-                    $notNumeric[] = $val;
+                    $notNumeric[] = $key;
                     $flag = false;
                     parent::setSuccess(false);
                     parent::setMsg(json_encode($notNumeric) . ' Need To be Number But Invalid Number Supplied');
@@ -104,12 +112,12 @@ class OvalidationSniffer extends OhandlerBaseProvider
 
     public static function isFloat($dataArr)
     {
-
+        
     }
 
     public static function hasSpace($dataArr)
     {
-
+        
     }
 
     public static function haveRequiredArgs($inputDataArr, $lookUpDataArr)
@@ -132,9 +140,9 @@ class OvalidationSniffer extends OhandlerBaseProvider
         $flag = true;
 
         if (is_array($date)) {
-            foreach ($date as $dt) {
+            foreach ($date as $key => $dt) {
                 if (!strtotime($dt)) {
-                    $notDate[] = $dt;
+                    $notDate[] = $key;
                     $flag = false;
                     parent::setSuccess(false);
                     parent::setMsg(json_encode($notDate) . ' Need To Be A Date But No Valid Date Supplied');
