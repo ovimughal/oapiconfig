@@ -25,8 +25,8 @@ class GateKeeper extends AbstractPlugin {
         $res = $this->isApiKeyValid($e);
         if ($res->getStatusCode() == 200) {
             $route = $e->getRouteMatch()->getMatchedRouteName();
-            if ('oapilogin' != $route ||
-                    (('oapilogin' == $route) &&
+            if ('login' != $route ||
+                    (('login' == $route) &&
                     ('POST' != $e->getRequest()->getMethod()))
             ) {
                 $res = $this->identify($e);

@@ -88,7 +88,6 @@ class OaclService extends OmodelBaseProvider
         $resources = $this->getOconfigManager()['resources'];
         $userRoles = $this->getOconfigManager()['userRoles'];
         $allowList = $this->getOconfigManager()['allowList'];
-        //print_r($allowList);die();
         try {
             $acl = new Acl();
             $acl->deny();
@@ -112,30 +111,53 @@ class OaclService extends OmodelBaseProvider
             $acl->addResource($resource);
         }
         foreach ($allowList as $allowed) {
+            //for multiple roles on same route
             if (is_array($allowed['role'])) {
                 $this->roleCheck($acl, $allowed);
             } else {
-                $this->methodCheck($acl, $allowed);
+                $this->routeCheck($acl, $allowed);
             }
         }
     }
-
-    public function methodCheck($acl, $allowed)
-    {
-        if (is_array($allowed['method'])) {
-            foreach ($allowed['method'] as $method) {
-                $acl->allow($allowed['role'], $allowed['module'], $allowed['controller'] . ':' . $method);
-            }
-        } else {
-            $acl->allow($allowed['role'], $allowed['module'], $allowed['controller'] . ':' . $allowed['method']);
-        }
-    }
-
+    
     public function roleCheck($acl, $allowed)
     {
+        //for multiple roles on same route
         foreach ($allowed['role'] as $role) {
             $allowed['role'] = $role;
-            $this->methodCheck($acl, $allowed);
+            $this->routeCheck($acl, $allowed);
+        }
+    }
+
+    public function routeCheck($acl, $allowed)
+    {
+        //mandatory route array check
+        if (isset($allowed['route'])) {
+            //for multiple routes in a module
+            if (is_array($allowed['route'])) {
+                foreach ($allowed['route'] as $route => $methods) {
+                    $allowed['route'] = $route;
+                    $this->methodCheck($acl, $allowed, $methods);
+                }
+            } else {
+                throw new Exception("Route in Allow List should be of type Array");
+            }
+        }
+        else{
+            throw new Exception("Route not defined in Allow List");
+        }
+    }
+
+    public function methodCheck(Acl $acl, $allowed, $methods)
+    {
+        //for multiple methods allowed on a route
+        if (is_array($methods)) {
+            foreach ($methods as $method) {
+                $acl->allow($allowed['role'], $allowed['module'], $allowed['controller'] . ':' . $allowed['route']. ':' . $method);
+            }
+        } else {
+            $method = $methods;
+            $acl->allow($allowed['role'], $allowed['module'], $allowed['controller'] . ':' . $allowed['route']. ':' . $method);
         }
     }
 
@@ -147,7 +169,7 @@ class OaclService extends OmodelBaseProvider
             $role = $this->getRole();
             $acl = $this->resourceDump();
             $result = $this->requestAnalyzer($e);
-            if (!$acl->isAllowed($role, $result['module'], $result['controller'] . ':' . $result['method'])) {
+            if (!$acl->isAllowed($role, $result['module'], $result['controller'] . ':' . $result['route'].  ':' . $result['method'])) {
                 $res->setStatusCode(400); //Bad Request
                 $this->setSuccess(false);
                 $this->setMsg('You Are Not Authorized');
@@ -171,7 +193,11 @@ class OaclService extends OmodelBaseProvider
         $controllerClass = get_class($controllerTarget);
         $moduleName = strtolower(substr($controllerClass, 0, strpos($controllerClass, '\\')));
         $routeMatch = $e->getRouteMatch();
-
+        //start new for oRest
+        $fullRoute = $routeMatch->getMatchedRouteName();
+        $fullRouteArr = explode('/', $fullRoute);
+        $route = $fullRouteArr[0];
+        //end new for oRest
         $restMethod = $e->getRequest()->getMethod();
         $controllerName = $routeMatch->getParam('controller', 'not-found');
         $exploded_arr = explode('\\', $controllerName);
@@ -182,6 +208,7 @@ class OaclService extends OmodelBaseProvider
         return [
             'module' => $moduleName,
             'controller' => $controller,
+            'route' => $route, //new for oRest
             'method' => $restMethod
         ];
     }

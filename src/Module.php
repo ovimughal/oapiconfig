@@ -43,7 +43,7 @@ class Module
         $eventManager->attach('route', array($this, 'loadConfiguration'), 1000);
         //$moduleRouteListener = new ModuleRouteListener();
         //$moduleRouteListener->attach($eventManager);
-        $eventManager->attach(MvcEvent::EVENT_DISPATCH, array($this, 'authorizationScanner'));
+        //$eventManager->attach(MvcEvent::EVENT_DISPATCH, array($this, 'authorizationScanner'));
         //$eventManager->attach(MvcEvent::EVENT_FINISH, array($this, 'thePileDriver'));
     }
 
@@ -58,25 +58,26 @@ class Module
 
         $matchedRoute = $router->match($request);
         if (null !== $matchedRoute) {
-            $route = $matchedRoute->getMatchedRouteName(); //oapi-by Ovi
-            if ('oapi' === substr($route, 0, 4)) {//oapi-by Ovi
-                $sharedManager->attach('Zend\Mvc\Controller\AbstractRestfulController', 'dispatch', function($e) use ($sm) {
+            //$route = $matchedRoute->getMatchedRouteName(); //oapi-by Ovi
+            //if ('oapi' === substr($route, 0, 4)) {//oapi-by Ovi
+                $sharedManager->attach('Zend\Mvc\Controller\AbstractActionController', 'dispatch', function($e) use ($sm) {
                     $sm->get('ControllerPluginManager')->get('GateKeeper')
                             ->routeIdentifier($e); //pass to the plugin...
+                    return $this->authorizationScanner($e);
                 }, 1000
                 );
-            }
+           // }
         } else {
             //oapi-by Ovi
-            $path = ltrim($router->getRequestUri()->getPath(), '/');
-            $pathFragments = explode('/', $path);
+            //$path = ltrim($router->getRequestUri()->getPath(), '/');
+            //$pathFragments = explode('/', $path);
 
-            if ('api' === $pathFragments[0]) {
+           // if ('api' === $pathFragments[0]) {
                 $res = $sm->get('response');
                 $res->getHeaders()->addHeaderLine('Content-Type', 'application/json');
                 $res->setContent(json_encode(['success' => false, 'msg' => 'Page Not Found', 'data' => (object) null]));
                 return $res->setStatusCode(404);
-            }
+          //  }
         }
     }
 
