@@ -23,13 +23,17 @@ class GateKeeper extends AbstractPlugin {
 
         $this->injectServiceLocator($e);
         $res = $this->isApiKeyValid($e);
+        $oConfigMngr = ServiceInjector::$serviceLocator->get('config')['oconfig_manager'];
+        $loginEnabled = $oConfigMngr['settings']['enable_login'];
         if ($res->getStatusCode() == 200) {
-            $route = $e->getRouteMatch()->getMatchedRouteName();
+            $route = 'login/post' == $e->getRouteMatch()->getMatchedRouteName() ? 'login' : $e->getRouteMatch()->getMatchedRouteName();
             if ('login' != $route ||
                     (('login' == $route) &&
                     ('POST' != $e->getRequest()->getMethod()))
             ) {
+                if($loginEnabled){
                 $res = $this->identify($e);
+                }
                 if ($res->getStatusCode() == 200) {
                     $res = $this->accessVerifier($e);
                 }
