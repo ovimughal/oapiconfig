@@ -83,6 +83,7 @@ class Module
 
     public function authorizationScanner($e)
     {
+        $e->getResponse()->getHeaders()->addHeaderLine('Access-Control-Allow-Origin','*');
         if (405 == $e->getResponse()->getStatusCode()) {
             $e->getResponse()->getHeaders()->addHeaderLine('Content-Type', 'application/json');
             $e->getResponse()->setContent(json_encode(['success' => false, 'msg' => 'Method Not Found', 'data' => (object) null]));
