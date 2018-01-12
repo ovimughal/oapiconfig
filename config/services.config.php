@@ -16,7 +16,9 @@ return [
             //'Oimagecurler' => 'Oapiconfig\Factories\OimagecurlerFactory',
             Services\OimagecurlerService::class => Factories\OimagecurlerFactory::class,
             //'Oacl' => 'Oapiconfig\Factories\OaclFactory',
-            Services\OaclService::class => Factories\OaclFactory::class
+            Services\OaclService::class => Factories\OaclFactory::class,
+            //'OfileManager' => 'Oapiconfig\Factories\OfilemanagerFactory',
+            Services\OfilemanagerService::class => Factories\OfilemanagerFactory::class,
         ],
         'aliases' => [
             // Register an alias for Services
@@ -26,6 +28,7 @@ return [
             'Oapisecurity' => Services\OapisecurityService::class,
             'Oimagecurler' => Services\OimagecurlerService::class,
             'Oacl' => Services\OaclService::class,
+            'Ofilemanager' => Services\OfilemanagerService::class
         ],
     ]
 ];

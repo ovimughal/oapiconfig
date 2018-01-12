@@ -47,5 +47,13 @@ class ServiceInjector
          */
         return self::$serviceLocator->get('Oimagecurler');
     }
+    
+    public static function oFileManager(){
+        /*
+         * Methods that can be used from the caller
+         * # downloadFile($imageName, $folderName = null)
+         */
+        return self::$serviceLocator->get('Ofilemanager');
+    }
 
 }

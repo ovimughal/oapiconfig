@@ -18,13 +18,15 @@ use Zend\Mvc\Controller\Plugin\AbstractPlugin;
  */
 class GateKeeper extends AbstractPlugin {
 
-    public function routeIdentifier($e) {
-        define('ENV', getenv('APPLICATION_ENV') == 'development' ? true : false);
-
+    public function routeIdentifier(\Zend\Mvc\MvcEvent $e) {
         $this->injectServiceLocator($e);
         $res = $this->isApiKeyValid($e);
+        
         $oConfigMngr = ServiceInjector::$serviceLocator->get('config')['oconfig_manager'];
         $loginEnabled = $oConfigMngr['settings']['enable_login'];
+        $appDevEnv = $oConfigMngr['settings']['app_development_env'];
+        define('ENV', is_bool($appDevEnv) ? $appDevEnv : true);
+        
         if ($res->getStatusCode() == 200) {
             $route = 'login/post' == $e->getRouteMatch()->getMatchedRouteName() ? 'login' : $e->getRouteMatch()->getMatchedRouteName();
             if ('login' != $route ||

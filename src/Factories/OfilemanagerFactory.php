@@ -9,24 +9,24 @@
 namespace Oapiconfig\Factories;
 
 use Interop\Container\ContainerInterface;
-use Oapiconfig\Services\OimagecurlerService;
+use Oapiconfig\Services\OfilemanagerService;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Description of OimagecurlerFactory
+ * Description of OfilemanagerFactory
  *
  * @author OviMughal
  */
-class OimagecurlerFactory implements FactoryInterface
+class OfilemanagerFactory implements FactoryInterface
 {
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        //return new OimagecurlerService();
+        //return new OfilemanagerService();
     }
 
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null) {
-        return new OimagecurlerService();
+        return new OfilemanagerService();
     }
 
 }

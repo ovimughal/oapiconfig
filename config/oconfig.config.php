@@ -4,6 +4,10 @@ namespace Oapiconfig;
 return [
     'oconfig_manager' => [
         'settings' => [
+            'enable_login' => false,
+            'app_development_env' => getenv('APPLICATION_ENV') == 'production' ? false : true,
+            '_file_path' => 'img/',
+            'customeName1_file_path' => '',
             'image_server' => 'http://localhost:8092/',
             'employee_image_path' => 'img/empProfile/',
             'company_image_path' => 'img/companylogo/',

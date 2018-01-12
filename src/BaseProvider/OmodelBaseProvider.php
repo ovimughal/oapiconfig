@@ -86,7 +86,7 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         return $result;
     }
 
-    public function select($dql, $paramsArr, $errMsg = null, $limit = null)
+    public function select($dql, $paramsArr, $errMsg = null, $limit = null, $option = null)
     {
         try {
             $query = $this->getDoctObjMngr()->createQuery($dql);
@@ -95,7 +95,19 @@ class OmodelBaseProvider extends OhandlerBaseProvider
                 $query->setMaxResults($limit);
             }
             $queryResult = $query->getArrayResult();
-            $result = $this->queryResultCheck($queryResult, $errMsg);
+            
+            switch ($option) {
+                case 'update':
+                    $result = ['updated' => $this->queryResultCheck($queryResult, $errMsg)];
+                    break;
+                case 'delete':
+                    $result = ['deleted' => $this->queryResultCheck($queryResult, $errMsg)];
+                    break;                
+                default:
+                    $result = $this->queryResultCheck($queryResult, $errMsg);
+                    break;
+            }           
+            
         } catch (Exception $exc) {
             parent::setSuccess(false);
             $result = $exc;
@@ -123,7 +135,28 @@ class OmodelBaseProvider extends OhandlerBaseProvider
 
     public function update($dql, $paramsArr, $errMsg = null)
     {
-        return $this->select($dql, $paramsArr, $errMsg);
+        return $this->select($dql, $paramsArr, $errMsg, null, 'update');
+    }
+    
+    public function delete($dql, $paramsArr, $errMsg = null)
+    {
+        return $this->select($dql, $paramsArr, $errMsg, null, 'delete');
+    }
+    
+    public function deleteWithId($entityName, $id)
+    {
+        try {
+            $entityObject = $this->getDoctObjMngr()->find($this->getPath() . '\\' . $entityName, $id);
+            $this->getDoctObjMngr()->remove($entityObject);
+            $this->getDoctObjMngr()->flush();
+            $result = ['deleted' => $id];
+        } catch (Exception $exc) {
+            parent::setSuccess(false);
+            $result = $exc;
+            throw new Exception($exc);
+        }
+
+        return $result;
     }
 
 }
