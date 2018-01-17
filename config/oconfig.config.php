@@ -7,6 +7,7 @@ return [
             'enable_login' => false,
             'enable_db_acl' => true,
             'app_development_env' => getenv('APPLICATION_ENV') == 'production' ? false : true,
+            'base_path' => 'public',
             '_file_path' => 'img/',
             'customeName1_file_path' => '',
             'image_server' => 'http://localhost:8092/',
