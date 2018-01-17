@@ -119,7 +119,7 @@ class OaclService extends OmodelBaseProvider
             }
         }
     }
-    
+
     public function roleCheck($acl, $allowed)
     {
         //for multiple roles on same route
@@ -142,8 +142,7 @@ class OaclService extends OmodelBaseProvider
             } else {
                 throw new Exception("Route in Allow List should be of type Array");
             }
-        }
-        else{
+        } else {
             throw new Exception("Route not defined in Allow List");
         }
     }
@@ -153,11 +152,11 @@ class OaclService extends OmodelBaseProvider
         //for multiple methods allowed on a route
         if (is_array($methods)) {
             foreach ($methods as $method) {
-                $acl->allow($allowed['role'], $allowed['module'], $allowed['controller'] . ':' . $allowed['route']. ':' . $method);
+                $acl->allow($allowed['role'], $allowed['module'], $allowed['controller'] . ':' . $allowed['route'] . ':' . $method);
             }
         } else {
             $method = $methods;
-            $acl->allow($allowed['role'], $allowed['module'], $allowed['controller'] . ':' . $allowed['route']. ':' . $method);
+            $acl->allow($allowed['role'], $allowed['module'], $allowed['controller'] . ':' . $allowed['route'] . ':' . $method);
         }
     }
 
@@ -165,11 +164,12 @@ class OaclService extends OmodelBaseProvider
     {
         $res = $e->getResponse();
         $allowed = true;
+        $db_acl_enabled = $this->getOconfigManager()['settings']['enable_db_acl'];
         try {
             $role = $this->getRole();
-            $acl = $this->resourceDump();
+            $acl = true == $db_acl_enabled ? $this->dbResourceDump() : $this->resourceDump();
             $result = $this->requestAnalyzer($e);
-            if (!$acl->isAllowed($role, $result['module'], $result['controller'] . ':' . $result['route'].  ':' . $result['method'])) {
+            if (!$acl->isAllowed($role, $result['module'], $result['controller'] . ':' . $result['route'] . ':' . $result['method'])) {
                 $res->setStatusCode(400); //Bad Request
                 $this->setSuccess(false);
                 $this->setMsg('You Are Not Authorized');
@@ -211,6 +211,77 @@ class OaclService extends OmodelBaseProvider
             'route' => $route, //new for oRest
             'method' => $restMethod
         ];
+    }
+
+    public function dbResourceDump()
+    {
+        try {
+            $dql = 'SELECT acl.get, acl.post, acl.put, acl.patch, acl.delete, r.rolename, '
+                    . 'rt.modulename, rt.controllername, rt.routename '
+                    . 'FROM ' . $this->getPath() . '\Acl acl JOIN acl.roleid r '
+                    . 'JOIN acl.routeid rt where r.rolename = ?1';
+            $params = [1 => $this->getRole()];
+            $errMsg = 'ACL DB not found';
+
+            $result = $this->select($dql, $params, $errMsg);
+
+            $role = $result[0]['rolename'];
+            
+            $acl = new Acl();
+            $acl->deny();
+            
+            $this->dbResourceLoader($acl, $role);
+
+            foreach ($result as $data) {
+                $module = $data['modulename'];
+                $controller = $data['controllername'];
+                $route = $data['routename'];
+
+                if ($data['get']) {
+                    $method = 'GET';
+                    $this->allowAcl($acl, $role, $module, $controller, $route, $method);
+                }
+
+                if ($data['post']) {
+                    $method = 'POST';
+                    $this->allowAcl($acl, $role, $module, $controller, $route, $method);
+                }
+
+                if ($data['put']) {
+                    $method = 'PUT';
+                    $this->allowAcl($acl, $role, $module, $controller, $route, $method);
+                }
+
+                if ($data['patch']) {
+                    $method = 'PATCH';
+                    $this->allowAcl($acl, $role, $module, $controller, $route, $method);
+                }
+
+                if ($data['delete']) {
+                    $method = 'DELETE';
+                    $this->allowAcl($acl, $role, $module, $controller, $route, $method);
+                }
+            }
+        } catch (Exception $exc) {
+            throw new Exception($exc->getMessage(), $exc->getCode(), $exc->getPrevious());
+        }
+        return $acl;
+    }
+
+    public function dbResourceLoader($acl, $role)
+    {
+        $resources = $this->getOconfigManager()['resources'];
+        $acl->addRole(new Role($role));
+
+        foreach ($resources as $resource) {
+            $acl->addResource($resource);
+        }
+    }
+
+    public function allowAcl($acl, $role, $module, $controller, $route, $method)
+    {
+        //change takes place on object, why return then :)
+        $acl->allow($role, $module, $controller . ':' . $route . ':' . $method);
     }
 
 }

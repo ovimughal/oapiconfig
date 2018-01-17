@@ -5,6 +5,7 @@ return [
     'oconfig_manager' => [
         'settings' => [
             'enable_login' => false,
+            'enable_db_acl' => true,
             'app_development_env' => getenv('APPLICATION_ENV') == 'production' ? false : true,
             '_file_path' => 'img/',
             'customeName1_file_path' => '',
