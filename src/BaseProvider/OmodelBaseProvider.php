@@ -68,6 +68,9 @@ class OmodelBaseProvider extends OhandlerBaseProvider
     public function insert($dataArr, $entityName, $idName)
     {
         try {
+            parent::setSuccess(true);
+            parent::setMsg('Executed Successfully');
+            
             $entityObj = $this->getEntity($entityName);
             $this->hydrateEntity($dataArr, $entityObj);
             $this->getDoctObjMngr()->persist($entityObj);
@@ -89,6 +92,9 @@ class OmodelBaseProvider extends OhandlerBaseProvider
     public function select($dql, $paramsArr, $errMsg = null, $limit = null, $option = null)
     {
         try {
+            parent::setSuccess(true);
+            parent::setMsg('Executed Successfully');
+            
             $query = $this->getDoctObjMngr()->createQuery($dql);
             $query->setParameters($paramsArr);
             if(null != $limit){
