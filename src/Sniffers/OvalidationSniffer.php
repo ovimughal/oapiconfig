@@ -18,10 +18,18 @@ use Oapiconfig\BaseProvider\OhandlerBaseProvider;
 class OvalidationSniffer extends OhandlerBaseProvider
 {
 
-    public static function isEmpty($data)
+    public static function isEmpty($dataList, $ignoreListRaw = null)
     {
         $res = false;
-        if (is_array($data)) {
+        if (is_array($dataList)) {
+            
+            if (null != $ignoreListRaw) {
+                $ignoreList = array_flip($ignoreListRaw);
+                $data = array_diff_key($dataList, $ignoreList);
+            } else {
+                $data = $dataList;
+            }
+            
             foreach ($data as $key => $val) {
                 if ('' == $val) {
                     $emptyData[] = $key;
@@ -31,10 +39,10 @@ class OvalidationSniffer extends OhandlerBaseProvider
                 }
             }
         } else {
-            if ('' == $data) {
+            if ('' == $dataList) {
                 $res = true;
                 parent::setSuccess(false);
-                parent::setMsg(json_encode($data) . ' Cannot Be Empty But Required Fields Are Empty');
+                parent::setMsg(json_encode($dataList) . ' Cannot Be Empty But Required Fields Are Empty');
             }
         }
 
