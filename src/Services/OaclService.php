@@ -170,9 +170,9 @@ class OaclService extends OmodelBaseProvider
             $acl = true == $db_acl_enabled ? $this->dbResourceDump() : $this->resourceDump();
             $result = $this->requestAnalyzer($e);
             if (!$acl->isAllowed($role, $result['module'], $result['controller'] . ':' . $result['route'] . ':' . $result['method'])) {
-                $res->setStatusCode(400); //Bad Request
+                $res->setStatusCode(403); //Forbidden
                 $this->setSuccess(false);
-                $this->setMsg('You Are Not Authorized');
+                $this->setMsg('You Are Not Authorized To Access');
                 $allowed = false;
             }
         } catch (Exception $exc) {

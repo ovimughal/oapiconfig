@@ -60,21 +60,21 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
                     $token = JWT::decode($jwt, $this->getKey(), array($this->getAlgo()));
                     $this->setUserInfo((array) $token->data);
                 } catch (ExpiredException $exExc) {
-                    $res->setStatusCode(401); //unauthorized
+                    $res->setStatusCode(401); //unauthorized basically it means user is unauthenticated
                     $this->setSuccess(false);
                     $this->setMsg('Token Expired');
                 } catch (\Exception $exc) {
-                    $res->setStatusCode(401); //unauthorized
+                    $res->setStatusCode(401); //unauthorized basically it means user is unauthenticated
                     $this->setSuccess(false);
                     $this->setMsg('Invalid Token');
                 }
             } else {
-                $res->setStatusCode(401); //unauthorized
+                $res->setStatusCode(401); //unauthorized basically it means user is unauthenticated
                 $this->setSuccess(false);
                 $this->setMsg('No Bearer');
             }
         } else {
-            $res->setStatusCode(401); //unauthorized
+            $res->setStatusCode(401); //unauthorized basically it means user is unauthenticated
             $this->setSuccess(false);
             $this->setMsg('No Authorization Token');
         }

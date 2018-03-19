@@ -21,6 +21,9 @@ class OexceptionSniffer extends OhandlerBaseProvider
     public static function exceptionScanner($result)
     {
         if (is_a($result, 'Exception')) {
+            $res = parent::getOserviceLocator()->get('Response');
+            $res->setStatusCode(417); //Expectation Failed
+            
             if (ENV) {
                 $result = $result->getMessage();
             } else {
