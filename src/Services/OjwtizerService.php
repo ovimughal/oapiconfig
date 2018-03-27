@@ -24,7 +24,7 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
     public function ojwtGenerator()
     {
         $jwt = JWT::encode(
-                        $this->getPayload(), $this->getKey(), $this->getAlgo()
+                        $this->getPayload(), $this->getSaltedKey(), $this->getAlgo()
         );
         return $jwt;
     }
@@ -57,7 +57,7 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
             if ($jwt) {
                 try {
                     //JWT::$leeway = 60;
-                    $token = JWT::decode($jwt, $this->getKey(), array($this->getAlgo()));
+                    $token = JWT::decode($jwt, $this->getSaltedKey(), array($this->getAlgo()));
                     $this->setUserInfo((array) $token->data);
                 } catch (ExpiredException $exExc) {
                     $res->setStatusCode(401); //unauthorized basically it means user is unauthenticated
@@ -84,6 +84,35 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
             $res->setContent($jsonModel->serialize());
         }
         return $res;
+    }
+    
+    public function getSaltedKey()
+    {
+        return $this->getKey().$this->getTokenSalt();
+    }
+
+    public function getTokenSalt(){
+        $config = parse_ini_file(__DIR__ . '/token.ini');    
+        $tokenSalt = $config['token_salt'];
+        
+        return $tokenSalt;
+    }
+    
+    public function invalidateJWT()
+    {
+        try {
+            
+            $config = parse_ini_file(__DIR__ . '/token.ini');            
+            $config['token_salt'] = time();
+            
+            $f = fopen(__DIR__ . '/token.ini', 'w');
+            foreach ($config as $name => $value) {
+                fwrite($f, "$name = $value\n");
+            }
+            fclose($f);
+        } catch (Exception $exc) {
+            throw new Exception($exc);
+        }
     }
 
 }
