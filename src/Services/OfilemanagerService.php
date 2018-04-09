@@ -17,49 +17,82 @@ use Oapiconfig\BaseProvider\OhandlerBaseProvider;
  */
 class OfilemanagerService extends OhandlerBaseProvider
 {
-     public function downloadFile($filename, $folderName=null)
-    {
-         $response = new \Zend\Http\Response\Stream();
-        if(!empty($filename))
-        {
-            $basePath = $this->getOconfigManager()['settings']['base_path'];
-            $filePath = null == $folderName ? '_file_path' : $folderName.'_file_path';
-            $path = getcwd().'/'.$basePath.'/'.$this->getOconfigManager()['settings'][$filePath].'/';
-            
-            if (!is_readable($path.$filename)) {
-            // Set 404 Not Found status code
-            $response->setStatusCode(404);    
-            }
-            else{
-            
-            //$response = new \Zend\Http\Response\Stream();
-            $response->setStream(fopen($path.$filename, "r"));
 
-            $response->setStatusCode(200);
-            
-            $mainType = 'application';
-            $type = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            
-            $imageTypes = ['png','jpg','jpeg','gif'];
-            
-            if(in_array($type, $imageTypes)){
-                    $mainType = 'image';
+    public function getAppRootPath()
+    {
+        return getcwd();
+    }
+
+//    public function getAppBasePath()
+//    {
+//        $basePath = $this->getOconfigManager()['settings']['base_path'];
+//        $fullPath = getcwd().'/'.$basePath;
+//        
+//        return $fullPath;
+//    }
+
+    public function getFolderPath($folderName = null)
+    {
+        if (null != $folderName && isset($this->getOconfigManager()['settings'][$folderName])) {
+            $fullPath = getcwd() . '/' . $this->getOconfigManager()['settings'][$folderName];
+
+            if (!is_dir($fullPath)) {
+                $fullPath = 'Invalid Directory';
             }
-            
-            $headers = new \Zend\Http\Headers();
-            $headers->addHeaderLine('Content-Type', $mainType.'/'.$type)
-                    ->addHeaderLine('Content-Disposition', 'inline; filename="'.basename($filename).'"')
-                    ->addHeaderLine('Content-Length', filesize($path.$filename))
-                    ->addHeaderLine("Cache-control: private");
-            $response->setHeaders($headers);
-            }
+        } else {
+            $fullPath = 'Wrong/No Resource';
         }
-        else
-        {
-            $response->setStatusCode(404);
+        return $fullPath;
+    }
+    
+    public function getConfigValue($key){
+        if(!empty($key) && isset($this->getOconfigManager()['settings'][$key])){
+            $value = $this->getOconfigManager()['settings'][$key];
+        }
+        else{
+            $value = 'Wrong/No Key';
         }
         
-        if($response->getStatusCode() != 200){
+        return $value;
+    }
+
+    public function downloadFile($filename, $folderName = null)
+    {
+        $response = new \Zend\Http\Response\Stream();
+        if (!empty($filename)) {
+            $path = $this->getFolderPath($folderName) . '/';
+
+            if (!is_readable($path . $filename)) {
+                // Set 404 Not Found status code
+                $response->setStatusCode(404);
+            } else {
+
+                //$response = new \Zend\Http\Response\Stream();
+                $response->setStream(fopen($path . $filename, "r"));
+
+                $response->setStatusCode(200);
+
+                $mainType = 'application';
+                $type = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+                $imageTypes = ['png', 'jpg', 'jpeg', 'gif'];
+
+                if (in_array($type, $imageTypes)) {
+                    $mainType = 'image';
+                }
+
+                $headers = new \Zend\Http\Headers();
+                $headers->addHeaderLine('Content-Type', $mainType . '/' . $type)
+                        ->addHeaderLine('Content-Disposition', 'inline; filename="' . basename($filename) . '"')
+                        ->addHeaderLine('Content-Length', filesize($path . $filename))
+                        ->addHeaderLine("Cache-control: private");
+                $response->setHeaders($headers);
+            }
+        } else {
+            $response->setStatusCode(404);
+        }
+
+        if ($response->getStatusCode() != 200) {
             $this->setData(\Oapiconfig\Sniffers\OexceptionSniffer::exceptionScanner(new \Exception('Either filename is empty or not readable, Please verify filename')));
             $response = new \Zend\View\Model\JsonModel($this->getResult());
         }
@@ -104,5 +137,4 @@ class OfilemanagerService extends OhandlerBaseProvider
 //
 //        return $imgData;
 //    }
-
 }
