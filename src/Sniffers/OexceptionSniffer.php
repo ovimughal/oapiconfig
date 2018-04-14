@@ -23,7 +23,7 @@ class OexceptionSniffer extends OhandlerBaseProvider
         if (is_a($result, 'Exception')) {
             $res = parent::getOserviceLocator()->get('Response');
             $res->setStatusCode(417); //Expectation Failed
-            
+
             if (ENV) {
                 $result = $result->getMessage();
             } else {
@@ -33,8 +33,14 @@ class OexceptionSniffer extends OhandlerBaseProvider
             parent::setMsg('An Exception Occured');
         }
 
-        if (!count($result)) {
-            $result = (object) null;
+        if (is_array($result)) {
+            if (!count($result)) {
+                $result = (object) null;
+            }
+        } else {
+            if ('' === $result || null === $result) {
+                $result = (object) null;
+            }
         }
 
         return $result;
