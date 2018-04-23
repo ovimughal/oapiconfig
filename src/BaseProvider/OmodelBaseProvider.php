@@ -70,7 +70,7 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         try {
             parent::setSuccess(true);
             parent::setMsg('Executed Successfully');
-            
+
             $entityObj = $this->getEntity($entityName);
             $this->hydrateEntity($dataArr, $entityObj);
             $this->getDoctObjMngr()->persist($entityObj);
@@ -94,26 +94,25 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         try {
             parent::setSuccess(true);
             parent::setMsg('Executed Successfully');
-            
+
             $query = $this->getDoctObjMngr()->createQuery($dql);
             $query->setParameters($paramsArr);
-            if(null != $limit){
+            if (null != $limit) {
                 $query->setMaxResults($limit);
             }
             $queryResult = $query->getArrayResult();
-            
+
             switch ($option) {
                 case 'update':
                     $result = ['updated' => $this->queryResultCheck($queryResult, $errMsg)];
                     break;
                 case 'delete':
                     $result = ['deleted' => $this->queryResultCheck($queryResult, $errMsg)];
-                    break;                
+                    break;
                 default:
                     $result = $this->queryResultCheck($queryResult, $errMsg);
                     break;
-            }           
-            
+            }
         } catch (Exception $exc) {
             parent::setSuccess(false);
             $result = $exc;
@@ -125,14 +124,15 @@ class OmodelBaseProvider extends OhandlerBaseProvider
 
     public function queryResultCheck($queryResult, $errMsg = null)
     {
-        if (!count($queryResult) || 0 == $queryResult) {
+        $count = is_array($queryResult) ? count($queryResult) : $queryResult;
+        if (0 == $count) {
             $msg = null == $errMsg ? 'Result Not Found' : $errMsg;
-            
-            /*commented, since return result is empty but the query is 
+
+            /* commented, since return result is empty but the query is 
              * still valid. It is just it returns empty so success can't be false.
              */
-           // $this->setSuccess(false);           
-           parent::setMsg($msg);
+            // $this->setSuccess(false);           
+            parent::setMsg($msg);
             $queryResult = [];
         }
 
@@ -143,12 +143,12 @@ class OmodelBaseProvider extends OhandlerBaseProvider
     {
         return $this->select($dql, $paramsArr, $errMsg, null, 'update');
     }
-    
+
     public function delete($dql, $paramsArr, $errMsg = null)
     {
         return $this->select($dql, $paramsArr, $errMsg, null, 'delete');
     }
-    
+
     public function deleteWithId($entityName, $id)
     {
         try {
@@ -163,6 +163,12 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         }
 
         return $result;
+    }
+
+    public function generateJasperReport($sqlQuery, $reportTemplate, $parameters = [])
+    {
+        require __DIR__ . '/ReportingEngine/JasperEngine.php';
+        return executeJasper($sqlQuery, $reportTemplate, $parameters);
     }
 
 }

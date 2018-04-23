@@ -31,10 +31,10 @@ class OfilemanagerService extends OhandlerBaseProvider
 //        return $fullPath;
 //    }
 
-    public function getFolderPath($folderName = null)
+    public function getFolderPath($resourceName = null)
     {
-        if (null != $folderName && isset($this->getOconfigManager()['settings'][$folderName])) {
-            $fullPath = getcwd() . '/' . $this->getOconfigManager()['settings'][$folderName];
+        if (null != $resourceName && isset($this->getOconfigManager()['settings'][$resourceName])) {
+            $fullPath = getcwd() . '/' . $this->getOconfigManager()['settings'][$resourceName];
 
             if (!is_dir($fullPath)) {
                 $fullPath = 'Invalid Directory';
@@ -44,23 +44,23 @@ class OfilemanagerService extends OhandlerBaseProvider
         }
         return $fullPath;
     }
-    
-    public function getConfigValue($key){
-        if(!empty($key) && isset($this->getOconfigManager()['settings'][$key])){
+
+    public function getConfigValue($key)
+    {
+        if (!empty($key) && isset($this->getOconfigManager()['settings'][$key])) {
             $value = $this->getOconfigManager()['settings'][$key];
-        }
-        else{
+        } else {
             $value = 'Wrong/No Key';
         }
-        
+
         return $value;
     }
 
-    public function downloadFile($filename, $folderName = null)
+    public function downloadFile($filename, $resourceName = null)
     {
         $response = new \Zend\Http\Response\Stream();
         if (!empty($filename)) {
-            $path = $this->getFolderPath($folderName) . '/';
+            $path = $this->getFolderPath($resourceName) . '/';
 
             if (!is_readable($path . $filename)) {
                 // Set 404 Not Found status code
@@ -99,42 +99,140 @@ class OfilemanagerService extends OhandlerBaseProvider
         return $response;
     }
 
-//    public function getCurledImageData($imageName, $imageResource = null)
-//    {
-//        $resource = null != $imageResource ? $imageResource : 'employee';
-//        $imageServer = $this->getOconfigManager()['settings']['image_server'];
-//        $imagePath = $this->getOconfigManager()['settings'][$resource . '_image_path'];
-//        $url = $imageServer . $imagePath . $imageName;
-//
-//        $ch = curl_init();
-//
-//        curl_setopt($ch, CURLOPT_URL, $url);
-//        curl_setopt($ch, CURLOPT_HEADER, false);
-//        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-//        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-//        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.1 Safari/537.11');
-//
-//        $rawData = curl_exec($ch);
-//
-//        //$rescode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-//        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-//
-//        curl_close($ch);
-//
-//        if ('text/html;charset=UTF-8' !== $contentType) {
-//            $imgData = $this->getPictureData($rawData, $imageName);
-//        } else {
-//            $imgData = false;
-//        }
-//        return $imgData;
-//    }
-//
-//    public function getPictureData($rawData, $imageName)
-//    {
-//        $imageData = base64_encode($rawData);
-//        $type = pathinfo($imageName, PATHINFO_EXTENSION);
-//        $imgData = 'data:image/' . $type . ';base64,' . $imageData;
-//
-//        return $imgData;
-//    }
+    public function getFileData($fileName, $fileResource = null, $fromFileServer = false)
+    {
+        $response = new \Zend\Http\Response\Stream();
+        if (!empty($fileName) && null != $fileResource) {            
+
+            if (!$fromFileServer) {
+                $file = $this->getFolderPath($fileResource) . '/' . $fileName;
+                $rawData = file_get_contents($file);
+                $contentType = mime_content_type($file);
+            } else {
+                $fileServer = $this->getOconfigManager()['settings']['file_server'];
+                $filePath = $this->getOconfigManager()['settings'][$fileResource];
+
+                $url = $fileServer . $filePath . $fileName;
+
+                $ch = curl_init();
+
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HEADER, false);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.1 Safari/537.11');
+
+                $rawData = curl_exec($ch);
+
+                //$rescode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+                
+                curl_close($ch);                
+            }
+            
+            if ('text/html;charset=UTF-8' !== $contentType) {
+                    $fileData = $this->getCompiledFileData($rawData, $contentType);
+                } else {
+                    $fileData = false;
+                }
+        } else {
+            $response->setStatusCode(404);
+        }
+
+        if ($response->getStatusCode() != 200) {
+            $this->setData(\Oapiconfig\Sniffers\OexceptionSniffer::exceptionScanner(new \Exception('Either filename is empty or not readable, Please verify filename')));
+            $response = new \Zend\View\Model\JsonModel($this->getResult());
+        } else {
+            $response = $fileData;
+        }
+
+        return $response;
+    }
+
+    public function getCompiledFileData($rawData, $contentType)
+    {
+        $encodedFileData = base64_encode($rawData);
+        // $type = pathinfo($fileName, PATHINFO_EXTENSION);
+        // $fileData = 'data:image/' . $type . ';base64,' . $encodedFileData;
+        $fileData = 'data:'.$contentType . ';base64,' . $encodedFileData;
+
+        return $fileData;
+    }
+
+    // This method is not used
+    // It is a backup or logic behind mime_content_type
+    public function getMimeType($param)
+    {
+        if (!function_exists('mime_content_type')) {
+
+            function mime_content_type($filename)
+            {
+
+                $mime_types = array(
+                    'txt' => 'text/plain',
+                    'htm' => 'text/html',
+                    'html' => 'text/html',
+                    'php' => 'text/html',
+                    'css' => 'text/css',
+                    'js' => 'application/javascript',
+                    'json' => 'application/json',
+                    'xml' => 'application/xml',
+                    'swf' => 'application/x-shockwave-flash',
+                    'flv' => 'video/x-flv',
+                    // images
+                    'png' => 'image/png',
+                    'jpe' => 'image/jpeg',
+                    'jpeg' => 'image/jpeg',
+                    'jpg' => 'image/jpeg',
+                    'gif' => 'image/gif',
+                    'bmp' => 'image/bmp',
+                    'ico' => 'image/vnd.microsoft.icon',
+                    'tiff' => 'image/tiff',
+                    'tif' => 'image/tiff',
+                    'svg' => 'image/svg+xml',
+                    'svgz' => 'image/svg+xml',
+                    // archives
+                    'zip' => 'application/zip',
+                    'rar' => 'application/x-rar-compressed',
+                    'exe' => 'application/x-msdownload',
+                    'msi' => 'application/x-msdownload',
+                    'cab' => 'application/vnd.ms-cab-compressed',
+                    // audio/video
+                    'mp3' => 'audio/mpeg',
+                    'qt' => 'video/quicktime',
+                    'mov' => 'video/quicktime',
+                    // adobe
+                    'pdf' => 'application/pdf',
+                    'psd' => 'image/vnd.adobe.photoshop',
+                    'ai' => 'application/postscript',
+                    'eps' => 'application/postscript',
+                    'ps' => 'application/postscript',
+                    // ms office
+                    'doc' => 'application/msword',
+                    'rtf' => 'application/rtf',
+                    'xls' => 'application/vnd.ms-excel',
+                    'ppt' => 'application/vnd.ms-powerpoint',
+                    // open office
+                    'odt' => 'application/vnd.oasis.opendocument.text',
+                    'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
+                );
+
+                $ext = strtolower(array_pop(explode('.', $filename)));
+                if (array_key_exists($ext, $mime_types)) {
+                    $mime = $mime_types[$ext];
+                } elseif (function_exists('finfo_open')) {
+                    $finfo = finfo_open(FILEINFO_MIME);
+                    $mimetype = finfo_file($finfo, $filename);
+                    finfo_close($finfo);
+                    $mime = $mimetype;
+                } else {
+                    $mime = 'application/octet-stream';
+                }
+
+                return $mime;
+            }
+
+        }
+    }
+
 }

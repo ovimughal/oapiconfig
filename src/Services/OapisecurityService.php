@@ -19,40 +19,61 @@ use Zend\View\Model\JsonModel;
 class OapisecurityService extends OapisecurityServiceBaseProvider
 {
 
+    private $req;
+    private $res;
+    private $jsonModel;
+    private $flag;
+
     public function apiKeyScanner()
     {
-        $req = $this->getOserviceLocator()->get('Request');
-        $res = $this->getOserviceLocator()->get('Response');
-        $jsonModel = new JsonModel();
-        $authHeader = $req->getHeader('X-Api-Key');
+        $this->req = $this->getOserviceLocator()->get('Request');
+        $this->res = $this->getOserviceLocator()->get('Response');
+        $this->jsonModel = new JsonModel();
 
-        $flag = true;
+        $authHeader = $this->req->getHeader('X-Api-Key');
+
+        $this->flag = true;
         if ($authHeader) {
             list($api_key) = sscanf($authHeader->toString(), 'X-Api-Key: %s');
-            if ($api_key != $this->getApiKey()) {
-                $flag = false;
-                $res->setStatusCode(402); //Payment Required :)
-                $jsonModel->setVariables([
-                    'success' => false,
-                    'msg' => 'Inavlid Api Key',
-                    'data' => (object) null,
-                ]);
-            }
+            $this->apiKeyValidityScanner($api_key);
         } else {
-            $flag = false;
-            $res->setStatusCode(401); //Unauthorized
-            $jsonModel->setVariables([
+            if ($this->req->getQuery('key')) {
+                $encodedKey = $this->req->getQuery('key');
+                $key = substr($encodedKey, 5, -5);
+                $this->apiKeyValidityScanner($key);
+            } else {
+                $this->unauthorizedApiKey();
+            }
+        }
+
+        if (!$this->flag) {
+            $this->res->setContent($this->jsonModel->serialize());
+        }
+        return $this->res;
+    }
+
+    public function apiKeyValidityScanner($api_key)
+    {
+        if ($api_key != $this->getApiKey()) {
+            $this->flag = false;
+            $this->res->setStatusCode(402); //Payment Required :)
+            $this->jsonModel->setVariables([
                 'success' => false,
-                'msg' => 'No Api Key',
+                'msg' => 'Inavlid Api Key',
                 'data' => (object) null,
             ]);
         }
+    }
 
-        if (!$flag) {
-            $res->setContent($jsonModel->serialize());
-        }
-
-        return $res;
+    public function unauthorizedApiKey()
+    {
+        $this->flag = false;
+        $this->res->setStatusCode(401); //Unauthorized
+        $this->jsonModel->setVariables([
+            'success' => false,
+            'msg' => 'No Api Key',
+            'data' => (object) null,
+        ]);
     }
 
 }

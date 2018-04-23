@@ -5,14 +5,30 @@ return [
     'oconfig_manager' => [
         'settings' => [
             'enable_login' => false,
-            'enable_db_acl' => true,
-            'app_development_env' => getenv('APPLICATION_ENV') == 'production' ? false : true,
-            'base_path' => 'public',
-            '_file_path' => 'img/',
+            'enable_db_acl' => false,
+            'app_development_env' => getenv('APPLICATION_ENV') == 'development' ? true : false,
+            //Start-Custom Keys
+            'attachmentPath' => 'public/img/upload',
             'customeName1_file_path' => '',
-            'image_server' => 'http://localhost:8092/',
-            'employee_image_path' => 'img/empProfile/',
-            'company_image_path' => 'img/companylogo/',
+            // End-Custom Keys
+            
+            // Start-For Reporting Engine
+            'java_bridge' => 'http://localhost:8090/JavaBridge/java/Java.inc',
+            'dbms' => 'sqlsrv',//mysql
+            'dbms_server' => '192.168.100.17:1433',
+            'data_base_name' => 'SalesConMigrated',
+            'data_base_user' => 'sa',
+            'data_base_password' => 'ERPSalesCon',
+            'reporting_templates' => 'public/reporting/templates',
+            'reporting_output' => 'public/reporting/output',
+            // End-For Reporting Engine
+            
+            // Start-For File Data Engine
+            'file_server' => 'http://localhost:9005/',
+            'filePath' => 'public/img',
+            'remoteFilePath' => 'img/',
+            'customeName2_file_path' => 'img/customeName2/',
+            // End-For File Data Engine
         ],
         'api' => [
             'api_key' => 'jIJMLFjW2Jr2Ko1JCO0Gpi8s8KgHdiGT37I6UI+RedqRTVU5p4bDgaB++3Zn9Y0ixUO0GpE5VJq9NlIT9LbM5Q==',
