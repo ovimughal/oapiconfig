@@ -164,6 +164,23 @@ class OmodelBaseProvider extends OhandlerBaseProvider
 
         return $result;
     }
+    
+    public function nativeSelect($sql, $errMsg = null)
+    {
+        try {
+            parent::setSuccess(true);
+            parent::setMsg('Executed Successfully');
+            
+            $queryResult = $this->getDoctObjMngr()->getConnection()->fetchAll($sql);
+            $result = $this->queryResultCheck($queryResult, $errMsg);
+        } catch (Exception $exc) {
+            parent::setSuccess(false);
+            $result = $exc;
+            throw new Exception($exc);
+        }
+
+        return $result;
+    }
 
     public function generateJasperReport($sqlQuery, $reportTemplate, $parameters = [], $outputFormat = 'pdf')
     {
