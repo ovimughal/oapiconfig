@@ -9,6 +9,7 @@
 namespace Oapiconfig\Services;
 
 use Oapiconfig\BaseProvider\OapisecurityServiceBaseProvider;
+use Oapiconfig\DI\ServiceInjector;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -38,11 +39,12 @@ class OapisecurityService extends OapisecurityServiceBaseProvider
             $this->apiKeyValidityScanner($api_key);
         } else {
             if ($this->req->getQuery('key')) {
-                $encodedKey = $this->req->getQuery('key');
-                $key = substr($encodedKey, 5, -5);
-                $this->apiKeyValidityScanner($key);
+                $encodedKey = $this->req->getQuery('key');  
+                $api_key = $this->keyDecoder($encodedKey);
+                
+                $this->apiKeyValidityScanner($api_key);
             } else {
-                $this->unauthorizedApiKey();
+                $this->noApiKey();
             }
         }
 
@@ -64,8 +66,25 @@ class OapisecurityService extends OapisecurityServiceBaseProvider
             ]);
         }
     }
+    
+    public function keyDecoder($encodedKey)
+    {
+        $keySeperator = ServiceInjector::oFileManager()->getConfigValue('hyperlink_security_salt','api');
+        $baseDecodedKey = base64_decode($encodedKey);
+        list($salted_api_key,$jwt) = explode($keySeperator, $baseDecodedKey);
+        
+        $this->setAuthToken($jwt);
+        
+        $api_key = substr($salted_api_key, 5, -5);
+        
+        return $api_key;
+    }
+    
+    public function setAuthToken($jwt){
+        $this->req->getHeaders()->addHeaders(['authorization' => 'Bearer '.$jwt]);
+    }
 
-    public function unauthorizedApiKey()
+    public function noApiKey()
     {
         $this->flag = false;
         $this->res->setStatusCode(401); //Unauthorized

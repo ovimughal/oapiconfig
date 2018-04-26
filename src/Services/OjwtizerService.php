@@ -11,6 +11,7 @@ namespace Oapiconfig\Services;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Oapiconfig\BaseProvider\OjwtizerServiceBaseProvider;
+use Oapiconfig\DI\ServiceInjector;
 use Zend\View\Model\JsonModel;
 
 /**
@@ -55,6 +56,7 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
             list($jwt) = sscanf($authHeader->toString(), 'Authorization: Bearer %s');
 
             if ($jwt) {
+                $this->setOjwt($jwt); // sets user sent jwt everytime. Done only for getSecureHyperlinkKey() method
                 try {
                     //JWT::$leeway = 60;
                     $token = JWT::decode($jwt, $this->getSaltedKey(), array($this->getAlgo()));

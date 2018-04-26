@@ -8,7 +8,14 @@
 
 namespace Oapiconfig\Services;
 
+use Exception;
 use Oapiconfig\BaseProvider\OhandlerBaseProvider;
+use Oapiconfig\DI\ServiceInjector;
+use Oapiconfig\Sniffers\OexceptionSniffer;
+use Zend\Http\Headers;
+use Zend\Http\Response;
+use Zend\Http\Response\Stream;
+use Zend\View\Model\JsonModel;
 
 /**
  * Description of OfilemanagerService
@@ -45,10 +52,10 @@ class OfilemanagerService extends OhandlerBaseProvider
         return $fullPath;
     }
 
-    public function getConfigValue($key)
+    public function getConfigValue($key, $domain = 'settings')
     {
-        if (!empty($key) && isset($this->getOconfigManager()['settings'][$key])) {
-            $value = $this->getOconfigManager()['settings'][$key];
+        if (!empty($key) && isset($this->getOconfigManager()[$domain][$key])) {
+            $value = $this->getOconfigManager()[$domain][$key];
         } else {
             $value = 'Wrong/No Key';
         }
@@ -58,7 +65,7 @@ class OfilemanagerService extends OhandlerBaseProvider
 
     public function downloadFile($filename, $resourceName = null)
     {
-        $response = new \Zend\Http\Response\Stream();
+        $response = new Stream();
         if (!empty($filename)) {
             $path = $this->getFolderPath($resourceName) . '/';
 
@@ -81,7 +88,7 @@ class OfilemanagerService extends OhandlerBaseProvider
                     $mainType = 'image';
                 }
 
-                $headers = new \Zend\Http\Headers();
+                $headers = new Headers();
                 $headers->addHeaderLine('Content-Type', $mainType . '/' . $type)
                         ->addHeaderLine('Content-Disposition', 'inline; filename="' . basename($filename) . '"')
                         ->addHeaderLine('Content-Length', filesize($path . $filename))
@@ -93,16 +100,16 @@ class OfilemanagerService extends OhandlerBaseProvider
         }
 
         if ($response->getStatusCode() != 200) {
-            $this->setData(\Oapiconfig\Sniffers\OexceptionSniffer::exceptionScanner(new \Exception('Either filename is empty or not readable, Please verify filename')));
-            $response = new \Zend\View\Model\JsonModel($this->getResult());
+            $this->setData(OexceptionSniffer::exceptionScanner(new Exception('Either filename is empty or not readable, Please verify filename')));
+            $response = new JsonModel($this->getResult());
         }
         return $response;
     }
 
     public function getFileData($fileName, $fileResource = null, $fromFileServer = false)
     {
-        $response = new \Zend\Http\Response\Stream();
-        if (!empty($fileName) && null != $fileResource) {            
+        $response = new Response();
+        if (!empty($fileName) && null != $fileResource) {
 
             if (!$fromFileServer) {
                 $file = $this->getFolderPath($fileResource) . '/' . $fileName;
@@ -126,22 +133,22 @@ class OfilemanagerService extends OhandlerBaseProvider
 
                 //$rescode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-                
-                curl_close($ch);                
+
+                curl_close($ch);
             }
-            
+
             if ('text/html;charset=UTF-8' !== $contentType) {
-                    $fileData = $this->getCompiledFileData($rawData, $contentType);
-                } else {
-                    $fileData = false;
-                }
+                $fileData = $this->getCompiledFileData($rawData, $contentType);
+            } else {
+                $fileData = false;
+            }
         } else {
             $response->setStatusCode(404);
         }
 
         if ($response->getStatusCode() != 200) {
-            $this->setData(\Oapiconfig\Sniffers\OexceptionSniffer::exceptionScanner(new \Exception('Either filename is empty or not readable, Please verify filename')));
-            $response = new \Zend\View\Model\JsonModel($this->getResult());
+            $this->setData(OexceptionSniffer::exceptionScanner(new Exception('Either filename is empty or not readable, Please verify filename')));
+            $response = new JsonModel($this->getResult());
         } else {
             $response = $fileData;
         }
@@ -154,9 +161,24 @@ class OfilemanagerService extends OhandlerBaseProvider
         $encodedFileData = base64_encode($rawData);
         // $type = pathinfo($fileName, PATHINFO_EXTENSION);
         // $fileData = 'data:image/' . $type . ';base64,' . $encodedFileData;
-        $fileData = 'data:'.$contentType . ';base64,' . $encodedFileData;
+        $fileData = 'data:' . $contentType . ';base64,' . $encodedFileData;
 
         return $fileData;
+    }
+
+    public function getSecureHyperlinkKey()
+    {
+        $keySeperatorSalt = $this->getConfigValue('hyperlink_security_salt', 'api');
+        $apiKeySecurityOne = $this->getConfigValue('hyperlink_api_key_security_one', 'api');
+        $apiKeySecurityTwo = $this->getConfigValue('hyperlink_api_key_security_two', 'api');
+        $apiKey = $this->getConfigValue('api_key', 'api');
+        $jwt = ServiceInjector::oJwtizer()->getOjwt();
+
+        $secureKey = $apiKeySecurityOne . $apiKey . $apiKeySecurityTwo . $keySeperatorSalt . $jwt;
+
+        $encodedSecureKey = base64_encode($secureKey);
+
+        return 'key=' . $encodedSecureKey;
     }
 
     // This method is not used

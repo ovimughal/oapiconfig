@@ -21,6 +21,8 @@ return [
             'data_base_password' => 'ERPSalesCon',
             'reporting_templates' => 'public/reporting/templates',
             'reporting_output' => 'public/reporting/output',
+            'output_file_name' => 'output',
+            'output_file_download_route' => 'http://10.10.0.36:9005/testnew',
             // End-For Reporting Engine
             
             // Start-For File Data Engine
@@ -32,6 +34,9 @@ return [
         ],
         'api' => [
             'api_key' => 'jIJMLFjW2Jr2Ko1JCO0Gpi8s8KgHdiGT37I6UI+RedqRTVU5p4bDgaB++3Zn9Y0ixUO0GpE5VJq9NlIT9LbM5Q==',
+            'hyperlink_api_key_security_one' => 'pOnMl',
+            'hyperlink_api_key_security_two' => 'uTsRq',
+            'hyperlink_security_salt' => '10WtJoS',
         ],
         'ojwt' => [
             'jwt_key' => 'jbCdemn+Dr9j3JHh9zMtv8+W8MUR90LwsRH3R1TZDspOTgmqtGvcsUdoczdBsAMYUxDFi+9lKtN1QN5Da9JUdg==', //base64_encode(openssl_random_pseudo_bytes(64]],

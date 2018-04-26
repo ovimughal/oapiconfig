@@ -2,7 +2,7 @@
 
 require (\Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('java_bridge'));
 
-function executeJasper($sqlQuery, $reportTemplate, $parameters = [])
+function executeJasper($sqlQuery, $reportTemplate, $parameters = [], $outputFormat = 'pdf')
 {
     try {
         // Connect to Database
@@ -18,7 +18,7 @@ function executeJasper($sqlQuery, $reportTemplate, $parameters = [])
         $jasperPrint = $fillManager->fillReport($report, $params, $conn);
 
         // Export report to pdf, html, csv etc
-        $result = exportOutput($jasperPrint);
+        $result = exportOutput($jasperPrint, $outputFormat);
 
 
         //$url = $_SERVER['HTTP_REFERER'];
@@ -243,7 +243,10 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 break;
         }
         $exporter->exportReport();
-        $result = 'Report Generated Successfully';
+        $ouputFileName = Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('output_file_name');
+        $downloadLink = Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('output_file_download_route');
+        $secureKey = Oapiconfig\DI\ServiceInjector::oFileManager()->getSecureHyperlinkKey();
+        $result = $downloadLink.'/'.$ouputFileName.'.'.$outputFormat.'?'.$secureKey; //'Report Generated Successfully';
     } catch (JavaException $exc) {
         throw new Exception('Export Output Exception: ' . $exc);
     }
