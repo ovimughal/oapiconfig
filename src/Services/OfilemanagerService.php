@@ -180,6 +180,15 @@ class OfilemanagerService extends OhandlerBaseProvider
 
         return 'key=' . $encodedSecureKey;
     }
+    
+    public function getFileDownloadLink($filename, $format = null){
+        $downloadLink = $this->getConfigValue('file_download_route');
+        $secureKey = $this->getSecureHyperlinkKey();
+        $outputFormat = null == $format ? '' : '.'.$format;
+        $fileDownloadLink = $downloadLink.'/'.$filename.$outputFormat.'?'.$secureKey;
+        
+        return $fileDownloadLink;
+    }
 
     // This method is not used
     // It is a backup or logic behind mime_content_type

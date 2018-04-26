@@ -22,10 +22,10 @@ return [
             'reporting_templates' => 'public/reporting/templates',
             'reporting_output' => 'public/reporting/output',
             'output_file_name' => 'output',
-            'output_file_download_route' => 'http://10.10.0.36:9005/testnew',
             // End-For Reporting Engine
             
             // Start-For File Data Engine
+            'file_download_route' => 'http://10.10.0.36:9005/testnew',
             'file_server' => 'http://localhost:9005/',
             'filePath' => 'public/img',
             'remoteFilePath' => 'img/',

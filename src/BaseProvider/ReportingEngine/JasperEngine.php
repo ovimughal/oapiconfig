@@ -244,9 +244,7 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
         }
         $exporter->exportReport();
         $ouputFileName = Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('output_file_name');
-        $downloadLink = Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('output_file_download_route');
-        $secureKey = Oapiconfig\DI\ServiceInjector::oFileManager()->getSecureHyperlinkKey();
-        $result = $downloadLink.'/'.$ouputFileName.'.'.$outputFormat.'?'.$secureKey; //'Report Generated Successfully';
+        $result = Oapiconfig\DI\ServiceInjector::oFileManager()->getFileDownloadLink($ouputFileName, $outputFormat);//'Report Generated Successfully';
     } catch (JavaException $exc) {
         throw new Exception('Export Output Exception: ' . $exc);
     }
