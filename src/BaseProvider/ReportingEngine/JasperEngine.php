@@ -28,7 +28,7 @@ function executeJasper($sqlQuery, $reportTemplate, $parameters = [], $outputForm
         //chmod($outputPath, $mode)
         //unlink($outputPath);
     } catch (\Exception $exc) {
-        $result = $exc;
+        $result = new Exception('Execute Exception: '.$exc);
     }
     return $result;
 }
