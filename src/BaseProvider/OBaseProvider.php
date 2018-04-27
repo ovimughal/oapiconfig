@@ -18,7 +18,7 @@ use Oapiconfig\DI\ServiceInjector;
 class OBaseProvider
 {
 
-    public function getOserviceLocator()
+    public static function getOserviceLocator()
     {
         return ServiceInjector::$serviceLocator;
     }
