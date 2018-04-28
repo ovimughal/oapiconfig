@@ -182,10 +182,10 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         return $result;
     }
 
-    public function generateJasperReport($sqlQuery, $reportTemplate, $parameters = [], $outputFormat = 'pdf')
+    public function generateJasperReport($sqlQuery, $reportTemplate, $parameters = [], $subReportParameters = [], $outputFormat = 'pdf')
     {
         require __DIR__ . '/ReportingEngine/JasperEngine.php';
-        return executeJasper($sqlQuery, $reportTemplate, $parameters, $outputFormat);
+        return executeJasper($sqlQuery, $reportTemplate, $parameters, $subReportParameters, $outputFormat);
     }
 
 }

@@ -1,14 +1,15 @@
 <?php
+use Oapiconfig\DI\ServiceInjector;
 
-require (\Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('java_bridge'));
+require (ServiceInjector::oFileManager()->getConfigValue('java_bridge'));
 
-function executeJasper($sqlQuery, $reportTemplate, $parameters = [], $outputFormat = 'pdf')
+function executeJasper($sqlQuery, $reportTemplate, $parameters = [], $subReportParameters = [], $outputFormat = 'pdf')
 {
     try {
         // Connect to Database
         $conn = dataBaseConnection();
         // Set Parameters if any
-        $params = setParameters($parameters);
+        $params = setParameters($parameters, $subReportParameters);
         // Load Report Remplate & Compile Report with Query
         $report = loadAndCompileReport($reportTemplate, $sqlQuery);
 
@@ -27,7 +28,7 @@ function executeJasper($sqlQuery, $reportTemplate, $parameters = [], $outputForm
         //readfile($outputPath);
         //chmod($outputPath, $mode)
         //unlink($outputPath);
-    } catch (\Exception $exc) {
+    } catch (Exception $exc) {
         $result = new Exception('Execute Exception: '.$exc);
     }
     return $result;
@@ -37,11 +38,11 @@ function dataBaseConnection()
 {
     try {
 
-        $dbms = \Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('dbms');
-        $dbmsServer = \Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('dbms_server');
-        $dataBaseName = \Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('data_base_name');
-        $dataBaseUser = \Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('data_base_user');
-        $dataBasePassword = \Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('data_base_password');
+        $dbms = ServiceInjector::oFileManager()->getConfigValue('dbms');
+        $dbmsServer = ServiceInjector::oFileManager()->getConfigValue('dbms_server');
+        $dataBaseName = ServiceInjector::oFileManager()->getConfigValue('data_base_name');
+        $dataBaseUser = ServiceInjector::oFileManager()->getConfigValue('data_base_user');
+        $dataBasePassword = ServiceInjector::oFileManager()->getConfigValue('data_base_password');
 
         // Instantiate Java Lang class to set Database driver
         $class = new JavaClass('java.lang.Class');
@@ -74,7 +75,7 @@ function loadAndCompileReport($reportTemplate, $sqlQuery)
 {
     try {
         // Load Report Template Directory
-        $templateDir = getcwd().'/'.\Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('reporting_templates');
+        $templateDir = getcwd().'/'.ServiceInjector::oFileManager()->getConfigValue('reporting_templates');
 
         // Instantiate Jasper XML Loader
         $jasperxml = new java('net.sf.jasperreports.engine.xml.JRXmlLoader');
@@ -101,7 +102,7 @@ function loadAndCompileReport($reportTemplate, $sqlQuery)
     return $report;
 }
 
-function setParameters($parameters = [])
+function setParameters($parameters = [], $subReportParameters = [])
 {
     try {
         // Instantiate Java HashMap
@@ -117,6 +118,16 @@ function setParameters($parameters = [])
                 }
             }
         }
+        
+        // for subreports
+        if(is_array($subReportParameters)){
+            if(count($subReportParameters)){
+                $templateDir = getcwd().'/'.ServiceInjector::oFileManager()->getConfigValue('reporting_templates');
+                foreach ($subReportParameters as $key => $value) {
+                     $params->put($key, $templateDir . '/' . $value);
+                }
+            }
+        }
     } catch (JavaException $exc) {
         throw new Exception('Parameters Exception: ' . $exc);
     }
@@ -128,7 +139,7 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
 {
     try {
         // Load Output Directory
-        $outputDir = getcwd().'/'.\Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('reporting_output');
+        $outputDir = getcwd().'/'.ServiceInjector::oFileManager()->getConfigValue('reporting_output');
 
         // Instantiate Jasper Exporter
         $exporter = new java('net.sf.jasperreports.engine.JRExporter');
@@ -243,8 +254,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 break;
         }
         $exporter->exportReport();
-        $ouputFileName = Oapiconfig\DI\ServiceInjector::oFileManager()->getConfigValue('output_file_name');
-        $result = Oapiconfig\DI\ServiceInjector::oFileManager()->getFileDownloadLink($ouputFileName, $outputFormat);//'Report Generated Successfully';
+        $ouputFileName = ServiceInjector::oFileManager()->getConfigValue('output_file_name');
+        $result = ServiceInjector::oFileManager()->getFileDownloadLink($ouputFileName, $outputFormat);//'Report Generated Successfully';
     } catch (JavaException $exc) {
         throw new Exception('Export Output Exception: ' . $exc);
     }

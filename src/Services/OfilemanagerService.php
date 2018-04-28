@@ -180,13 +180,17 @@ class OfilemanagerService extends OhandlerBaseProvider
 
         return 'key=' . $encodedSecureKey;
     }
-    
-    public function getFileDownloadLink($filename, $format = null){
-        $downloadLink = $this->getConfigValue('file_download_route');
-        $secureKey = $this->getSecureHyperlinkKey();
-        $outputFormat = null == $format ? '' : '.'.$format;
-        $fileDownloadLink = $downloadLink.'/'.$filename.$outputFormat.'?'.$secureKey;
-        
+
+    public function getFileDownloadLink($filename, $format = null)
+    {
+        $downloadLink = $this->getConfigValue('reporting_file_download_route');
+        if ($downloadLink !== 'Wrong/No Key') {
+            $secureKey = $this->getSecureHyperlinkKey();
+            $outputFormat = null == $format ? '' : '.' . $format;
+            $fileDownloadLink = $downloadLink . '/' . $filename . $outputFormat . '?' . $secureKey;
+        } else {
+            $fileDownloadLink = 'Invalid configuration key';
+        }
         return $fileDownloadLink;
     }
 
