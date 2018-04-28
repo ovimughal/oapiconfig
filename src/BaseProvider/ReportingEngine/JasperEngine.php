@@ -255,7 +255,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
         }
         $exporter->exportReport();
         $ouputFileName = ServiceInjector::oFileManager()->getConfigValue('output_file_name');
-        $result = ServiceInjector::oFileManager()->getFileDownloadLink($ouputFileName, $outputFormat);//'Report Generated Successfully';
+        $resource = 'reporting_file_download_route';
+        $result = ServiceInjector::oFileManager()->getFileDownloadLink($resource, $ouputFileName, $outputFormat);//'Report Generated Successfully';
     } catch (JavaException $exc) {
         throw new Exception('Export Output Exception: ' . $exc);
     }
