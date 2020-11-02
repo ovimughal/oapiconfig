@@ -41,7 +41,7 @@ class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
     public function payloadInit()
     {
 
-        $payloadConfig['tokenId'] = base64_encode(mcrypt_create_iv(32));
+        $payloadConfig['tokenId'] = base64_encode(random_bytes(32));
         $payloadConfig['issuedAt'] = time();
         $payloadConfig['notBefore'] = $payloadConfig['issuedAt'] + $this->getIatOffset();             //Adding 10 seconds
         $payloadConfig['expire'] = $payloadConfig['notBefore'] + $this->getExpOffset();            // Adding 60 seconds

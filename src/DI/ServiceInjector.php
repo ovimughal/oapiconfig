@@ -18,7 +18,7 @@ class ServiceInjector
 
     public static $serviceLocator;
 
-    public static function oJwtizer()
+    public static function oJwtizer(): \Oapiconfig\Services\OjwtizerService
     {
         /*
          * Methods that can be used from the caller
@@ -27,7 +27,7 @@ class ServiceInjector
         return self::$serviceLocator->get('Ojwtizer');
     }
 
-    public static function oOrm()
+    public static function oOrm(): \Oapiconfig\Services\OormService
     {
         /*
          * Methods that can be used from the caller
@@ -39,7 +39,7 @@ class ServiceInjector
         return self::$serviceLocator->get('Oorm');
     }
 
-    public static function iCurler()
+    public static function iCurler(): \Oapiconfig\Services\OimagecurlerService
     {
         /*
          * Methods that can be used from the caller
@@ -74,13 +74,23 @@ class ServiceInjector
      * 
      * @author OviMughal
      */
-    public static function oFileManager()
+    public static function oFileManager(): \Oapiconfig\Services\OfilemanagerService
     {
         /*
          * Methods that can be used from the caller
          * # downloadFile($imageName, $folderName = null)
          */
         return self::$serviceLocator->get('Ofilemanager');
+    }
+
+    public static function oLanguage(): \Oapiconfig\Services\OlanguageService
+    {
+        /*
+         * Methods that can be used from the caller
+         * # setLanguage($language)
+         * # getLanguage()
+         */
+        return self::$serviceLocator->get('Olanguage');
     }
 
 }

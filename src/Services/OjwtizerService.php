@@ -34,6 +34,7 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
     {
         $res = $this->getSl()->get('Response');
         $this->setPayload($userData);
+        $this->setUserInfo((array) $userData); // so that as soon as user logs in, data becomes available
         $this->setOjwt($this->ojwtGenerator());
         $oJwt = $this->getOjwt();
         $oJwtExpiresIn = $this->getOjwtExpiresIn();
@@ -58,7 +59,8 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
             if ($jwt) {
                 $this->setOjwt($jwt); // sets user sent jwt everytime. Done only for getSecureHyperlinkKey() method
                 try {
-                    //JWT::$leeway = 60;
+                    // Adjust colck skew since angular app & apis are at different locations
+                    JWT::$leeway = 10;
                     $token = JWT::decode($jwt, $this->getSaltedKey(), array($this->getAlgo()));
                     $this->setUserInfo((array) $token->data);
                 } catch (ExpiredException $exExc) {
@@ -90,7 +92,7 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
     
     public function getSaltedKey()
     {
-        return $this->getKey().$this->getTokenSalt();
+        return $this->getKey().$this->getTokenSalt().$this->getServer();
     }
 
     public function getTokenSalt(){

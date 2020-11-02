@@ -1,5 +1,4 @@
 <?php
-
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -23,8 +22,13 @@ use Zend\View\Model\JsonModel;
  * @author OviMughal
  */
 class OfilemanagerService extends OhandlerBaseProvider
-{
-
+{    
+    public function __construct()
+    {
+        parent::__construct();
+        define('SLASH', (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') ? '\\' : '/');
+    }
+    
     public function getAppRootPath()
     {
         return getcwd();
@@ -41,7 +45,12 @@ class OfilemanagerService extends OhandlerBaseProvider
     public function getFolderPath($resourceName = null)
     {
         if (null != $resourceName && isset($this->getOconfigManager()['settings'][$resourceName])) {
-            $fullPath = getcwd() . '/' . $this->getOconfigManager()['settings'][$resourceName];
+            $path = $this->getOconfigManager()['settings'][$resourceName];
+            if(SLASH === '\\'){
+                $path = str_replace('/', '\\', $path);
+            }
+            
+            $fullPath = getcwd() . SLASH . $path;
 
             if (!is_dir($fullPath)) {
                 $fullPath = 'Invalid Directory';
@@ -67,7 +76,7 @@ class OfilemanagerService extends OhandlerBaseProvider
     {
         $response = new Stream();
         if (!empty($filename)) {
-            $path = $this->getFolderPath($resourceName) . '/';
+            $path = $this->getFolderPath($resourceName) . SLASH;
 
             if (!is_readable($path . $filename)) {
                 // Set 404 Not Found status code
@@ -112,7 +121,7 @@ class OfilemanagerService extends OhandlerBaseProvider
         if (!empty($fileName) && null != $fileResource) {
 
             if (!$fromFileServer) {
-                $file = $this->getFolderPath($fileResource) . '/' . $fileName;
+                $file = $this->getFolderPath($fileResource) . SLASH . $fileName;
                 $rawData = file_get_contents($file);
                 $contentType = mime_content_type($file);
             } else {
@@ -187,7 +196,9 @@ class OfilemanagerService extends OhandlerBaseProvider
         if ($downloadLink !== 'Wrong/No Key') {
             $secureKey = $this->getSecureHyperlinkKey();
             $outputFormat = null == $format ? '' : '.' . $format;
-            $fileDownloadLink = $downloadLink . '/' . $filename . $outputFormat . '?' . $secureKey;
+            $linkId = md5(time());
+
+            $fileDownloadLink = $downloadLink . '/' . $filename . $outputFormat . '?' . $secureKey.'&linkId='.$linkId;
         } else {
             $fileDownloadLink = 'Invalid configuration key';
         }

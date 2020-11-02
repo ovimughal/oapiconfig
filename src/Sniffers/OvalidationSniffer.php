@@ -22,16 +22,16 @@ class OvalidationSniffer extends OhandlerBaseProvider
     {
         $res = false;
         if (is_array($dataList)) {
-            
+
             if (null != $ignoreListRaw) {
                 $ignoreList = array_flip($ignoreListRaw);
                 $data = array_diff_key($dataList, $ignoreList);
             } else {
                 $data = $dataList;
             }
-            
+
             foreach ($data as $key => $val) {
-                if ('' == $val) {
+                if ('' === $val) {
                     $emptyData[] = $key;
                     $res = true;
                     parent::setSuccess(false);
@@ -39,7 +39,7 @@ class OvalidationSniffer extends OhandlerBaseProvider
                 }
             }
         } else {
-            if ('' == $dataList) {
+            if ('' === $dataList) {
                 $res = true;
                 parent::setSuccess(false);
                 parent::setMsg(json_encode($dataList) . ' Cannot Be Empty But Required Fields Are Empty');
@@ -91,7 +91,7 @@ class OvalidationSniffer extends OhandlerBaseProvider
         $flag = true;
 
         if (is_array($dataList)) {
-            
+
             if (null != $ignoreListRaw) {
                 $ignoreList = array_flip($ignoreListRaw);
                 $data = array_diff_key($dataList, $ignoreList);
@@ -165,6 +165,68 @@ class OvalidationSniffer extends OhandlerBaseProvider
         }
 
         return $flag;
+    }
+
+    public static function getNumbers($dataList, $toObtainNumbersForList = null, $numberSign = 'positive', $decimalOp = 'rounding')
+    {
+        $globalProc = new \GlobalProcedure\Model\GlobalProcedureModel();
+        $userData = \Oapiconfig\DI\ServiceInjector::oJwtizer()->getUserInfo();
+        $userAuthenticationCode = $userData['userId'];
+        $userPrefrences = $globalProc->getUserPrefrences($userAuthenticationCode);
+        $decimalScalePrecision = $userPrefrences['decimalscale'];
+
+        if (is_array($dataList)) {
+            if (null != $toObtainNumbersForList) {
+                $numbersForList = array_flip($toObtainNumbersForList);
+                $data = array_intersect_key($dataList, $numbersForList);
+            } else {
+                $data = $dataList;
+            }
+
+            $pureNumberList = [];
+            $pureNumber = 0;
+            foreach ($data as $key => $val) {
+                if ('negative' === $numberSign) {
+                    $pureNumber = preg_replace('/(?!^)-/', '', preg_replace('/(\..*)\./', '$1', preg_replace('/[^0-9.-]/', '', $val)));
+
+                    if ('rounding' === $decimalOp) {
+                        $pureNumberList[$key] = round($pureNumber, $decimalScalePrecision);
+                    } else if ('norounding' === $decimalOp) {
+                        $pureNumberList[$key] = $pureNumber;
+                    }
+                } else {
+                    $pureNumber = preg_replace("/[^0-9\.]/", "", $val);
+
+                    if ('rounding' === $decimalOp) {
+                        $pureNumberList[$key] = round($pureNumber, $decimalScalePrecision);
+                    } else if ('norounding' === $decimalOp) {
+                        $pureNumberList[$key] = $pureNumber;
+                    }
+                }
+            }
+
+            $numbers = $pureNumberList;
+        } else {
+            if ('negative' === $numberSign) {
+                $pureNumber = preg_replace('/(?!^)-/', '', preg_replace('/(\..*)\./', '$1', preg_replace('/[^0-9.-]/', '', $dataList)));
+//                $numbers = round($pureNumber, $decimalScalePrecision);
+                if ('rounding' === $decimalOp) {
+                    $numbers = round($pureNumber, $decimalScalePrecision);
+                } else if ('norounding' === $decimalOp) {
+                    $numbers = $pureNumber;
+                }
+            } else {
+                $pureNumber = preg_replace("/[^0-9\.]/", "", $dataList);
+//                $numbers = round($pureNumber, $decimalScalePrecision);
+                if ('rounding' === $decimalOp) {
+                    $numbers = round($pureNumber, $decimalScalePrecision);
+                } else if ('norounding' === $decimalOp) {
+                    $numbers = $pureNumber;
+                }
+            }
+        }
+
+        return $numbers;
     }
 
 }

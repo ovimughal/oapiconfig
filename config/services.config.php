@@ -19,6 +19,8 @@ return [
             Services\OaclService::class => Factories\OaclFactory::class,
             //'OfileManager' => 'Oapiconfig\Factories\OfilemanagerFactory',
             Services\OfilemanagerService::class => Factories\OfilemanagerFactory::class,
+            //'Olanguage' => 'Oapiconfig\Factories\OlanguageFactory',
+            Services\OlanguageService::class => Factories\OlanguageFactory::class
         ],
         'aliases' => [
             // Register an alias for Services
@@ -28,7 +30,8 @@ return [
             'Oapisecurity' => Services\OapisecurityService::class,
             'Oimagecurler' => Services\OimagecurlerService::class,
             'Oacl' => Services\OaclService::class,
-            'Ofilemanager' => Services\OfilemanagerService::class
+            'Ofilemanager' => Services\OfilemanagerService::class,
+            'Olanguage' => Services\OlanguageService::class
         ],
     ]
 ];

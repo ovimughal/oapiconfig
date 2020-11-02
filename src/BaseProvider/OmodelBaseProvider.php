@@ -104,10 +104,12 @@ class OmodelBaseProvider extends OhandlerBaseProvider
 
             switch ($option) {
                 case 'update':
-                    $result = ['updated' => $this->queryResultCheck($queryResult, $errMsg)];
+                    $updatedResult = $this->queryResultCheck($queryResult, $errMsg);
+                    $result = ['updated' => is_array($updatedResult) ? count($updatedResult) : $updatedResult];
                     break;
                 case 'delete':
-                    $result = ['deleted' => $this->queryResultCheck($queryResult, $errMsg)];
+                    $deletedResult = $this->queryResultCheck($queryResult, $errMsg);
+                    $result = ['deleted' => is_array($deletedResult) ? count($deletedResult) : $deletedResult];
                     break;
                 default:
                     $result = $this->queryResultCheck($queryResult, $errMsg);
@@ -164,15 +166,41 @@ class OmodelBaseProvider extends OhandlerBaseProvider
 
         return $result;
     }
-    
-    public function nativeSelect($sql, $errMsg = null)
+
+    public function nativeSelect($sql, $errMsg = null, $paramsArr = [], $option = null)
     {
         try {
             parent::setSuccess(true);
             parent::setMsg('Executed Successfully');
-            
-            $queryResult = $this->getDoctObjMngr()->getConnection()->fetchAll($sql);
-            $result = $this->queryResultCheck($queryResult, $errMsg);
+            //print_r($paramsArr);die();
+
+            $pStmt = $this->getDoctObjMngr()->getConnection()->prepare($sql);
+            $pStmt->execute($paramsArr);
+
+            switch ($option) {
+                case 'update':
+                    $queryResult = $pStmt->rowCount();
+                    $updatedResult = $this->queryResultCheck($queryResult, $errMsg);
+                    $result = ['updated' => is_array($updatedResult) ? count($updatedResult) : $updatedResult];
+                    break;
+                case 'delete':
+                    $queryResult = $pStmt->rowCount();
+                    $deletedResult = $this->queryResultCheck($queryResult, $errMsg);
+                    $result = ['deleted' => is_array($deletedResult) ? count($deletedResult) : $deletedResult];
+                    break;
+                default:
+                    $queryResult = $pStmt->fetchAll();
+                    $result = $this->queryResultCheck($queryResult, $errMsg);
+                    break;
+            }
+            //            if (!count($paramsArr)) {
+            //                $queryResult = $this->getDoctObjMngr()->getConnection()->fetchAll($sql);
+            //            } else {
+            //                $pStmt = $this->getDoctObjMngr()->getConnection()->prepare($sql);
+            //                $pStmt->execute($paramsArr);
+            //                $queryResult = $pStmt->fetchAll();
+            //            }
+            //            $result = $this->queryResultCheck($queryResult, $errMsg);
         } catch (Exception $exc) {
             parent::setSuccess(false);
             $result = $exc;
@@ -182,10 +210,58 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         return $result;
     }
 
-    public function generateJasperReport($sqlQuery, $reportTemplate, $parameters = [], $subReportParameters = [], $outputFormat = 'pdf')
+    public function nativeUpdate($sql, $errMsg = null, $paramsArr = [])
     {
-        require __DIR__ . '/ReportingEngine/JasperEngine.php';
-        return executeJasper($sqlQuery, $reportTemplate, $parameters, $subReportParameters, $outputFormat);
+        return $this->nativeSelect($sql, $errMsg, $paramsArr, 'update');
     }
 
+    public function nativeDelete($sql, $errMsg = null, $paramsArr = [])
+    {
+        return $this->nativeSelect($sql, $errMsg, $paramsArr, 'delete');
+    }
+
+    public function generateJasperReport(
+        string $sqlQuery,
+        string $reportTemplate,
+        array $parameters = [],
+        array $subReportParameters = [],
+        string $outputFormat = 'pdf',
+        string $language = null,
+        array $properties = [],
+        bool $generateNew = false,
+        bool $throwExc = false
+    ) {
+        try {
+            //        $class_name = '\GlobalProcedure\Model\GlobalProcedureModel';
+            //        if (class_exists($class_name)){
+            //            $globalProcedure = new \GlobalProcedure\Model\GlobalProcedureModel();
+            //            $userData = \Oapiconfig\DI\ServiceInjector::oJwtizer()->getUserInfo();
+            //            $userAuthenticationCode = $userData['userId'];
+            //            $userPrefrences = $globalProcedure->getUserPrefrences($userAuthenticationCode);
+            //            $language = $userPrefrences['language'];
+            //        }
+
+            $language = $language ?? $this->languageScanner();
+
+            require_once(__DIR__ . '/ReportingEngine/JasperEngine.php');
+            $result = executeJasper(
+                $sqlQuery,
+                $reportTemplate,
+                $parameters,
+                $subReportParameters,
+                $outputFormat,
+                $language,
+                $properties,
+                $generateNew
+            );
+        } catch (Exception $exc) {
+            if ($throwExc) {
+                throw new Exception($exc);
+            }
+
+            $result = $exc;
+        }
+        
+        return $result;
+    }
 }
