@@ -23,7 +23,7 @@
         "firebase/php-jwt": "^5.2",
         "laminas/laminas-json": "^3.1",
         "laminas/laminas-permissions-acl": "^2.7",
-	"ovimughal/zf3-module-creator": "dev-master"
+	    "ovimughal/zf3-module-creator": "dev-laminas-module-creator"
     },
     "autoload": {
         "psr-4": {
