@@ -9,7 +9,7 @@
 
 namespace Oapiconfig\Controller;
 
-use Zend\Mvc\Controller\AbstractRestfulController;
+use Laminas\Mvc\Controller\AbstractRestfulController;
 
 class ConfigController extends AbstractRestfulController
 {

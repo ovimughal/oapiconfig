@@ -9,7 +9,7 @@
 namespace Oapiconfig\Gateway;
 
 use Oapiconfig\DI\ServiceInjector;
-use Zend\Mvc\Controller\Plugin\AbstractPlugin;
+use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
 
 /**
  * Description of GateKeeper
@@ -19,7 +19,7 @@ use Zend\Mvc\Controller\Plugin\AbstractPlugin;
 class GateKeeper extends AbstractPlugin
 {
 
-    public function routeIdentifier(\Zend\Mvc\MvcEvent $e)
+    public function routeIdentifier(\Laminas\Mvc\MvcEvent $e)
     {
         $this->injectServiceLocator($e);
 //        $this->appLanguage($e);

@@ -11,10 +11,10 @@ use Exception;
 use Oapiconfig\BaseProvider\OhandlerBaseProvider;
 use Oapiconfig\DI\ServiceInjector;
 use Oapiconfig\Sniffers\OexceptionSniffer;
-use Zend\Http\Headers;
-use Zend\Http\Response;
-use Zend\Http\Response\Stream;
-use Zend\View\Model\JsonModel;
+use Laminas\Http\Headers;
+use Laminas\Http\Response;
+use Laminas\Http\Response\Stream;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Description of OfilemanagerService
@@ -83,7 +83,7 @@ class OfilemanagerService extends OhandlerBaseProvider
                 $response->setStatusCode(404);
             } else {
 
-                //$response = new \Zend\Http\Response\Stream();
+                //$response = new \Laminas\Http\Response\Stream();
                 $response->setStream(fopen($path . $filename, "r"));
 
                 $response->setStatusCode(200);

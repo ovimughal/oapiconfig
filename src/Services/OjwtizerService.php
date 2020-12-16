@@ -12,7 +12,7 @@ use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
 use Oapiconfig\BaseProvider\OjwtizerServiceBaseProvider;
 use Oapiconfig\DI\ServiceInjector;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Description of OjwtizerService

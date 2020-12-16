@@ -10,7 +10,7 @@
 
 namespace Oapiconfig;
 
-use Zend\Mvc\MvcEvent;
+use Laminas\Mvc\MvcEvent;
 
 class Module
 {
@@ -29,7 +29,7 @@ class Module
 
         // Merge all module config options
         foreach ($configFiles as $configFile) {
-            $config = \Zend\Stdlib\ArrayUtils::merge($config, include $configFile);
+            $config = \Laminas\Stdlib\ArrayUtils::merge($config, include $configFile);
         }
 
         return $config;
@@ -63,7 +63,7 @@ class Module
         if (null !== $matchedRoute) {
             //$route = $matchedRoute->getMatchedRouteName(); //oapi-by Ovi
             //if ('oapi' === substr($route, 0, 4)) {//oapi-by Ovi
-                $sharedManager->attach('Zend\Mvc\Controller\AbstractActionController', 'dispatch', function($e) use ($sm) {
+                $sharedManager->attach('Laminas\Mvc\Controller\AbstractActionController', 'dispatch', function($e) use ($sm) {
                     $sm->get('ControllerPluginManager')->get('GateKeeper')
                             ->routeIdentifier($e); //pass to the plugin...
                     return $this->authorizationScanner($e);

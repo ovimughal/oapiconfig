@@ -10,7 +10,7 @@ namespace Oapiconfig\Services;
 
 use Oapiconfig\BaseProvider\OapisecurityServiceBaseProvider;
 use Oapiconfig\DI\ServiceInjector;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Description of OapiService
