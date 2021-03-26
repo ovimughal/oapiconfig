@@ -62,6 +62,7 @@ function executeJasper(
 
         // Export report to pdf, html, csv etc or generate to png, jpg etc
         if ($generateNew) {
+            $GLOBALS['outputDir'] = getcwd() . '/' . ServiceInjector::oFileManager()->getConfigValue('reporting_templates_img_output');
             $result = generateNewOutput($jasperPrint, $outputFormat);
         } else {
             $result = exportOutput($jasperPrint, $outputFormat);

@@ -10,8 +10,8 @@ namespace Oapiconfig\Factories;
 
 use Interop\Container\ContainerInterface;
 use Oapiconfig\Services\OapisecurityService;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\FactoryInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Description of OapiFactory

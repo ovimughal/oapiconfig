@@ -20,7 +20,7 @@ class OimagecurlerService extends OhandlerBaseProvider
 
     public function getCurledImageData($imageName, $imageResource = null)
     {
-        $response = new \Zend\Http\Response\Stream();
+        $response = new \Laminas\Http\Response\Stream();
         if (!empty($imageName) && null != $imageResource) {
             $imageServer = $this->getOconfigManager()['settings']['image_server'];
             $imagePath = $this->getOconfigManager()['settings'][$imageResource];
@@ -52,7 +52,7 @@ class OimagecurlerService extends OhandlerBaseProvider
 
         if ($response->getStatusCode() != 200) {
             $this->setData(\Oapiconfig\Sniffers\OexceptionSniffer::exceptionScanner(new \Exception('Either filename is empty or not readable, Please verify filename')));
-            $response = new \Zend\View\Model\JsonModel($this->getResult());          
+            $response = new \Laminas\View\Model\JsonModel($this->getResult());          
         } else {
             $response = $imgData;
         }

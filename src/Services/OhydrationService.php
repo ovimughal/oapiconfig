@@ -23,7 +23,7 @@
 
 namespace Oapiconfig\Services;
 
-use DoctrineModule\Stdlib\Hydrator\DoctrineObject;
+use Doctrine\Laminas\Hydrator\DoctrineObject as HydratorDoctrineObject;
 
 /**
  * Hydrator Class
@@ -131,7 +131,7 @@ class OhydrationService
     public function getHydrator()
     {
         $doctrineObject = $this->getServiceLocator()->get('doctObjMngr');
-        $hydrator = new DoctrineObject($doctrineObject);
+        $hydrator = new HydratorDoctrineObject($doctrineObject);
         return $hydrator;
     }
 

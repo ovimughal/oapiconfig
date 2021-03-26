@@ -225,7 +225,7 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         string $reportTemplate,
         array $parameters = [],
         array $subReportParameters = [],
-        string $outputFormat = 'pdf',
+        string $outputFormat = null,
         string $language = null,
         array $properties = [],
         bool $generateNew = false,
@@ -241,6 +241,7 @@ class OmodelBaseProvider extends OhandlerBaseProvider
             //            $language = $userPrefrences['language'];
             //        }
 
+            $outputFormat = $outputFormat ?? 'pdf';
             $language = $language ?? $this->languageScanner();
 
             require_once(__DIR__ . '/ReportingEngine/JasperEngine.php');

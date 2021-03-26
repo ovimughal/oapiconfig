@@ -6,9 +6,9 @@ use Exception;
 use Oapiconfig\BaseProvider\OmodelBaseProvider;
 use Oapiconfig\DI\ServiceInjector;
 use Oapiconfig\Sniffers\OexceptionSniffer;
-use Zend\Permissions\Acl\Acl;
-use Zend\Permissions\Acl\Role\GenericRole as Role;
-use Zend\View\Model\JsonModel;
+use Laminas\Permissions\Acl\Acl;
+use Laminas\Permissions\Acl\Role\GenericRole as Role;
+use Laminas\View\Model\JsonModel;
 
 class OaclService extends OmodelBaseProvider
 {
