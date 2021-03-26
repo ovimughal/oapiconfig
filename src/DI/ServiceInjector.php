@@ -8,6 +8,8 @@
 
 namespace Oapiconfig\DI;
 
+use Interop\Container\ContainerInterface;
+
 /**
  * Description of ServiceInjector
  *
@@ -16,7 +18,7 @@ namespace Oapiconfig\DI;
 class ServiceInjector
 {
 
-    public static $serviceLocator;
+    public static ContainerInterface $serviceLocator;
 
     public static function oJwtizer(): \Oapiconfig\Services\OjwtizerService
     {
@@ -91,6 +93,21 @@ class ServiceInjector
          * # getLanguage()
          */
         return self::$serviceLocator->get('Olanguage');
+    }
+
+    public static function oConfigHighjacker(): \Oapiconfig\Services\OConfigHighjackerService
+    {
+        return self::$serviceLocator->get('OConfigHighjacker');
+    }
+
+    public static function oEncryption(): \Oapiconfig\Services\OEncryptionService
+    {
+        return self::$serviceLocator->get('OEncryption');
+    }
+
+    public static function oTenant(): \Oapiconfig\Services\OTenantService
+    {
+        return self::$serviceLocator->get('OTenant');
     }
 
 }

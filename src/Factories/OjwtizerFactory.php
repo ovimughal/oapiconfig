@@ -25,12 +25,14 @@ class OjwtizerFactory implements FactoryInterface
         //return new OjwtizerService($serviceLocator, $this->getConfiguration($serviceLocator));
     }
     
-    public function getConfiguration($serviceLocator){
+    public function getConfiguration(ContainerInterface $serviceLocator)
+    {
         $oconfig = $serviceLocator->get('config');
         return $oconfig['oconfig_manager']['ojwt'];
     }
 
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null) {
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null) : OjwtizerService
+    {
         return new OjwtizerService($container, $this->getConfiguration($container));
     }
 

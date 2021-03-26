@@ -23,7 +23,8 @@ class OormFactory implements FactoryInterface
         //return new OormService($serviceLocator);
     }
 
-    public function __invoke(ContainerInterface $container, $requestedName, array $options = null) {
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null) : OormService
+    {
         return new OormService($container);
     }
 

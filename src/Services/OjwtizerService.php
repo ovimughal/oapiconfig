@@ -8,8 +8,11 @@
 
 namespace Oapiconfig\Services;
 
+use Exception;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
+use Laminas\Http\Request;
+use Laminas\Http\Response;
 use Oapiconfig\BaseProvider\OjwtizerServiceBaseProvider;
 use Oapiconfig\DI\ServiceInjector;
 use Laminas\View\Model\JsonModel;
@@ -22,19 +25,25 @@ use Laminas\View\Model\JsonModel;
 class OjwtizerService extends OjwtizerServiceBaseProvider
 {
 
-    public function ojwtGenerator()
+    public function ojwtGenerator(): string
     {
         $jwt = JWT::encode(
-                        $this->getPayload(), $this->getSaltedKey(), $this->getAlgo()
+            $this->getPayload(),
+            $this->getSaltedKey(),
+            $this->getAlgo()
         );
         return $jwt;
     }
 
-    public function oJwtify($userData)
+    public function oJwtify(array $userData, array $tenantData = null): void
     {
+        /**
+         * @var Response
+         */
         $res = $this->getSl()->get('Response');
-        $this->setPayload($userData);
-        $this->setUserInfo((array) $userData); // so that as soon as user logs in, data becomes available
+        $this->setPayload($userData, $tenantData);
+        $this->setUserInfo($userData); // so that as soon as user logs in, data becomes available
+        $this->setTenantInfo($tenantData);
         $this->setOjwt($this->ojwtGenerator());
         $oJwt = $this->getOjwt();
         $oJwtExpiresIn = $this->getOjwtExpiresIn();
@@ -47,9 +56,15 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
         }
     }
 
-    public function ojwtValidator()
+    public function ojwtValidator() : Response
     {
+        /**
+         * @var Response
+         */
         $res = $this->getSl()->get('Response');
+        /**
+         * @var Request
+         */
         $req = $this->getSl()->get('Request');
         $authHeader = $req->getHeader('authorization');
 
@@ -57,12 +72,13 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
             list($jwt) = sscanf($authHeader->toString(), 'Authorization: Bearer %s');
 
             if ($jwt) {
-                $this->setOjwt($jwt); // sets user sent jwt everytime. Done only for getSecureHyperlinkKey() method
+                $this->setOjwt($jwt); // sets user sent jwt everytime. Done only for hyperlinkEncodedKey() method
                 try {
                     // Adjust colck skew since angular app & apis are at different locations
                     JWT::$leeway = 10;
                     $token = JWT::decode($jwt, $this->getSaltedKey(), array($this->getAlgo()));
-                    $this->setUserInfo((array) $token->data);
+                    $this->setUserInfo((array) $token->userData);
+                    $this->setTenantInfo((array) $token->tenantData);
                 } catch (ExpiredException $exExc) {
                     $res->setStatusCode(401); //unauthorized basically it means user is unauthenticated
                     $this->setSuccess(false);
@@ -89,26 +105,27 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
         }
         return $res;
     }
-    
-    public function getSaltedKey()
+
+    public function getSaltedKey() : string
     {
-        return $this->getKey().$this->getTokenSalt().$this->getServer();
+        return $this->getKey() . $this->getTokenSalt() . $this->getServer();
     }
 
-    public function getTokenSalt(){
-        $config = parse_ini_file(__DIR__ . '/token.ini');    
+    public function getTokenSalt() : string
+    {
+        $config = parse_ini_file(__DIR__ . '/token.ini');
         $tokenSalt = $config['token_salt'];
-        
+
         return $tokenSalt;
     }
-    
-    public function invalidateJWT()
+
+    public function invalidateJWT() : void
     {
         try {
-            
-            $config = parse_ini_file(__DIR__ . '/token.ini');            
+
+            $config = parse_ini_file(__DIR__ . '/token.ini');
             $config['token_salt'] = time();
-            
+
             $f = fopen(__DIR__ . '/token.ini', 'w');
             foreach ($config as $name => $value) {
                 fwrite($f, "$name = $value\n");
@@ -118,5 +135,4 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
             throw new Exception($exc);
         }
     }
-
 }

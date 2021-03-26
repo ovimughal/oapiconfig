@@ -8,6 +8,8 @@
 
 namespace Oapiconfig\BaseProvider;
 
+use Interop\Container\ContainerInterface;
+
 /**
  * Description of OjwtizerDataService
  *
@@ -15,18 +17,19 @@ namespace Oapiconfig\BaseProvider;
  */
 class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
 {
-    private $sl;
-    private $key;
-    private $algo;
-    private $data;
-    private $server;
-    private $iatOffset;
-    private $expOffset;
-    private $userInfo;
-    private $oJwt;
-    private $oJwtExpiresIn;
+    private ?ContainerInterface $sl;
+    private string $key;
+    private string $algo;
+    private ?array $data;
+    private string $server;
+    private int $iatOffset;
+    private int $expOffset;
+    private ?array $userInfo;
+    private ?string $oJwt;
+    private ?int $oJwtExpiresIn;
+    private ?array $tenantInfo;
 
-    public function __construct($sl, $config)
+    public function __construct(ContainerInterface $sl, array $config)
     {
         parent::__construct();
         
@@ -38,7 +41,12 @@ class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
         $this->setExpOffset($config['expOffset']);
     }
 
-    public function payloadInit()
+    /**
+     * Initialises and return jwt payload
+     *
+     * @return array {tokenId: string, issuedAt: int, notBefore: int, expire: int}
+     */
+    public function payloadInit() : array
     {
 
         $payloadConfig['tokenId'] = base64_encode(random_bytes(32));
@@ -49,7 +57,7 @@ class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
         return $payloadConfig;
     }
 
-    public function setPayload($userData)
+    public function setPayload(array $userData, array $tenantData = null) : void
     {
         $payloadConfig = $this->payloadInit();
 
@@ -66,102 +74,113 @@ class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
             'iss' => $this->getServer(), // Issuer
             'nbf' => $notBefore, // Not before
             'exp' => $expire, // Expire
-            'data' => $userData
+            'userData' => $userData,
+            'tenantData' => $tenantData
         ];
     }
     
-     public function getPayload()
+     public function getPayload() : array
     {
         return $this->data;
     }
     
-    public function setSl($sl)
+    public function setSl(ContainerInterface $sl)
     {
         $this->sl = $sl;
     }
     
-    public function getSl()
+    public function getSl() : ?ContainerInterface
     {
         return isset($this->sl) ? $this->sl : null;
     }
 
-    public function setUserInfo($userInfo)
+    public function setUserInfo(array $userInfo) : void
     {
         $this->userInfo = $userInfo;
     }
 
-    public function getUserInfo()
+    public function getUserInfo() : ?array
     {
         return isset($this->userInfo) ? $this->userInfo : null;
     }
 
-    public function setOjwt($oJwt)
+    public function setOjwt(string $oJwt)
     {
         $this->oJwt = $oJwt;
     }
 
-    public function getOjwt()
+    public function getOjwt() : ?string
     {
         return isset($this->oJwt) ? $this->oJwt : null;
     }
 
-    public function setOjwtExpiresIn($oJwtExpiresIn)
+    public function setOjwtExpiresIn(int $oJwtExpiresIn) : void
     {
         $this->oJwtExpiresIn = $oJwtExpiresIn;
     }
     
-    public function getOjwtExpiresIn()
+    public function getOjwtExpiresIn() : ?int
     {
         return isset($this->oJwtExpiresIn) ? $this->oJwtExpiresIn - time() : null;
     }
 
-    public function setKey($key)
+    public function setKey(string $key)
     {
         $this->key = $key;
     }
     
-    public function getKey()
+    public function getKey() : string
     {
         return isset($this->key) ? $this->key : 'My_Secret_Key';
     }
 
-    public function setAlgo($algo)
+    public function setAlgo(string $algo)
     {
         $this->algo = $algo;
     }
     
-    public function getAlgo()
+    public function getAlgo() : string
     {
         return isset($this->algo) ? $this->algo : 'HS512';
     }
     
-    public function setIatOffset($iatOffset)
+    public function setIatOffset(int $iatOffset)
     {
         $this->iatOffset = $iatOffset;
     }
     
-    public function getIatOffset()
+    public function getIatOffset() : int
     {
         return isset($this->iatOffset) ? $this->iatOffset : 10; //10 sec
     }
     
-    public function setExpOffset($expOffset)
+    public function setExpOffset(int $expOffset)
     {
         $this->expOffset = $expOffset;
     }
     
-    public function getExpOffset()
+    public function getExpOffset() : int
     {
         return isset($this->expOffset) ? $this->expOffset : 86400; // 24hrs
     }
     
-    public function setServer($server)
+    public function setServer(string $server)
     {
         $this->server = $server;
     }
     
-    public function getServer()
+    public function getServer() : string
     {
         return isset($this->server) ? $this->server : 'http://127.0.0.1:80'; //localhost
+    }
+
+    public function setTenantInfo(?array $tenantInfo) : void
+    {
+        $this->tenantInfo = $tenantInfo;
+    }
+
+    public function getTenantInfo() : ?array
+    {
+        return isset($this->tenantInfo) ? $this->tenantInfo : null;
     }
 }

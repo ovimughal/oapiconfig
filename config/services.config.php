@@ -1,4 +1,5 @@
 <?php
+
 namespace Oapiconfig;
 
 return [
@@ -20,7 +21,13 @@ return [
             //'OfileManager' => 'Oapiconfig\Factories\OfilemanagerFactory',
             Services\OfilemanagerService::class => Factories\OfilemanagerFactory::class,
             //'Olanguage' => 'Oapiconfig\Factories\OlanguageFactory',
-            Services\OlanguageService::class => Factories\OlanguageFactory::class
+            Services\OlanguageService::class => Factories\OlanguageFactory::class,
+            //'OConfigHighjacker' => 'Oapiconfig\Factories\OConfigHighjackerFactory',
+            Services\OConfigHighjackerService::class => Factories\OConfigHighjackerFactory::class,
+            //'OEncryption' => 'Oapiconfig\Factories\OEncryptionFactory',
+            Services\OEncryptionService::class => Factories\OEncryptionFactory::class,
+            //'OTenant' => 'Oapiconfig\Factories\OTenantFactory',
+            Services\OTenantService::class => Factories\OTenantFactory::class
         ],
         'aliases' => [
             // Register an alias for Services
@@ -31,8 +38,10 @@ return [
             'Oimagecurler' => Services\OimagecurlerService::class,
             'Oacl' => Services\OaclService::class,
             'Ofilemanager' => Services\OfilemanagerService::class,
-            'Olanguage' => Services\OlanguageService::class
+            'Olanguage' => Services\OlanguageService::class,
+            'OConfigHighjacker' => Services\OConfigHighjackerService::class,
+            'OEncryption' => Services\OEncryptionService::class,
+            'OTenant' => Services\OTenantService::class
         ],
     ]
 ];
-

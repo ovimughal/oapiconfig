@@ -8,8 +8,11 @@
 
 namespace Oapiconfig\BaseProvider;
 
+use Doctrine\ORM\EntityManager;
 use Exception;
 use Oapiconfig\DI\ServiceInjector;
+use Oapiconfig\Services\OhydrationService;
+use Oapiconfig\Services\OormService;
 
 /**
  * Description of OmodelBaseProvider
@@ -19,62 +22,63 @@ use Oapiconfig\DI\ServiceInjector;
 class OmodelBaseProvider extends OhandlerBaseProvider
 {
 
-    private $doctObjMngr;
+    private EntityManager $doctObjMngr;
     private $path;
+    private OormService $oOrm;
 
     public function __construct()
     {
         parent::__construct();
-        $oOrm = ServiceInjector::oOrm();
-        $this->setDoctObjMngr($oOrm);
-        $this->setPath($oOrm);
+        $this->oOrm = ServiceInjector::oOrm();
+        // $this->setDoctObjMngr($oOrm);
+        // $this->setPath($oOrm);
     }
 
-    public function hydrateEntity($dataArr, $entity)
+    public function hydrateEntity(array $dataArr, object $entity, string $doctrineServiceName = 'doctObjMngr') : OhydrationService
     {
         $oOrm = ServiceInjector::oOrm();
-        $hydrator = $oOrm->entityHydrator($dataArr, $entity);
+        $hydrator = $oOrm->entityHydrator($dataArr, $entity, $doctrineServiceName);
         return $hydrator;
     }
 
-    public function setDoctObjMngr($oOrm)
+    // public function setDoctObjMngr(OormService $oOrm)
+    // {
+    //     $this->doctObjMngr = $oOrm->getDoctObjMngr();
+    // }
+
+    public function getDoctObjMngr(string $doctrineServiceName = 'doctObjMngr') : EntityManager
     {
-        $this->doctObjMngr = $oOrm->getDoctObjMngr();
+        return $this->oOrm->getDoctObjMngr($doctrineServiceName);
     }
 
-    public function getDoctObjMngr()
+    // public function setPath($oOrm)
+    // {
+    //     $this->path = $oOrm->getEntityPath();
+    // }
+
+    public function getPath(string $ormConfig = 'orm_default_path') : string
     {
-        return $this->doctObjMngr;
+        return $this->oOrm->getEntityPath($ormConfig);
     }
 
-    public function setPath($oOrm)
-    {
-        $this->path = $oOrm->getEntityPath();
-    }
-
-    public function getPath()
-    {
-        return $this->path;
-    }
-
-    public function getEntity($entityName)
+    public function getEntity(string $entityName, string $ormConfig) : object
     {
         $entity = '';
-        eval('$entity = new ' . $this->getPath() . '\\' . $entityName . '();');
+        eval('$entity = new ' . $this->getPath($ormConfig) . '\\' . $entityName . '();');
 
-        return $entity;
+        return (object)$entity;
     }
 
-    public function insert($dataArr, $entityName, $idName)
+    public function insert(array $dataArr, string $entityName, string $idName, string $doctrineServiceName = 'doctObjMngr', string $ormConfig = 'orm_default_path') : array
     {
         try {
             parent::setSuccess(true);
             parent::setMsg('Executed Successfully');
 
-            $entityObj = $this->getEntity($entityName);
-            $this->hydrateEntity($dataArr, $entityObj);
-            $this->getDoctObjMngr()->persist($entityObj);
-            $this->getDoctObjMngr()->flush($entityObj);
+            $entityObj = $this->getEntity($entityName, $ormConfig);
+            $this->hydrateEntity($dataArr, $entityObj, $doctrineServiceName);
+            $this->getDoctObjMngr($doctrineServiceName)->persist($entityObj);
+            $this->getDoctObjMngr($doctrineServiceName)->flush($entityObj);
 
             $lastInsertId = true;
             eval('$lastInsertId = $entityObj->get' . $idName . '();');
@@ -82,20 +86,19 @@ class OmodelBaseProvider extends OhandlerBaseProvider
             $result = ['_id' => $lastInsertId]; //['_id' => $lastInsertId, 'msg' => 'success'];
         } catch (Exception $exc) {
             parent::setSuccess(false);
-            $result = $exc;
             throw new Exception($exc);
         }
 
         return $result;
     }
 
-    public function select($dql, $paramsArr, $errMsg = null, $limit = null, $option = null)
+    public function select($dql, $paramsArr, $errMsg = null, $limit = null, $option = null, string $doctrineServiceName = 'doctObjMngr')
     {
         try {
             parent::setSuccess(true);
             parent::setMsg('Executed Successfully');
 
-            $query = $this->getDoctObjMngr()->createQuery($dql);
+            $query = $this->getDoctObjMngr($doctrineServiceName)->createQuery($dql);
             $query->setParameters($paramsArr);
             if (null != $limit) {
                 $query->setMaxResults($limit);
@@ -117,7 +120,6 @@ class OmodelBaseProvider extends OhandlerBaseProvider
             }
         } catch (Exception $exc) {
             parent::setSuccess(false);
-            $result = $exc;
             throw new Exception($exc);
         }
 
@@ -141,22 +143,22 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         return $queryResult;
     }
 
-    public function update($dql, $paramsArr, $errMsg = null)
+    public function update($dql, $paramsArr, $errMsg = null, string $doctrineServiceName = 'doctObjMngr')
     {
-        return $this->select($dql, $paramsArr, $errMsg, null, 'update');
+        return $this->select($dql, $paramsArr, $errMsg, null, 'update', $doctrineServiceName);
     }
 
-    public function delete($dql, $paramsArr, $errMsg = null)
+    public function delete($dql, $paramsArr, $errMsg = null, string $doctrineServiceName = 'doctObjMngr')
     {
-        return $this->select($dql, $paramsArr, $errMsg, null, 'delete');
+        return $this->select($dql, $paramsArr, $errMsg, null, 'delete', $doctrineServiceName);
     }
 
-    public function deleteWithId($entityName, $id)
+    public function deleteWithId($entityName, $id, string $doctrineServiceName = 'doctObjMngr', string $ormConfig = 'orm_default_path')
     {
         try {
-            $entityObject = $this->getDoctObjMngr()->find($this->getPath() . '\\' . $entityName, $id);
-            $this->getDoctObjMngr()->remove($entityObject);
-            $this->getDoctObjMngr()->flush();
+            $entityObject = $this->getDoctObjMngr($doctrineServiceName)->find($this->getPath($ormConfig) . '\\' . $entityName, $id);
+            $this->getDoctObjMngr($doctrineServiceName)->remove($entityObject);
+            $this->getDoctObjMngr($doctrineServiceName)->flush();
             $result = ['deleted' => $id];
         } catch (Exception $exc) {
             parent::setSuccess(false);
@@ -167,14 +169,14 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         return $result;
     }
 
-    public function nativeSelect($sql, $errMsg = null, $paramsArr = [], $option = null)
+    public function nativeSelect($sql, $errMsg = null, $paramsArr = [], $option = null, string $doctrineServiceName = 'doctObjMngr')
     {
         try {
             parent::setSuccess(true);
             parent::setMsg('Executed Successfully');
             //print_r($paramsArr);die();
 
-            $pStmt = $this->getDoctObjMngr()->getConnection()->prepare($sql);
+            $pStmt = $this->getDoctObjMngr($doctrineServiceName)->getConnection()->prepare($sql);
             $pStmt->execute($paramsArr);
 
             switch ($option) {
@@ -210,14 +212,14 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         return $result;
     }
 
-    public function nativeUpdate($sql, $errMsg = null, $paramsArr = [])
+    public function nativeUpdate($sql, $errMsg = null, $paramsArr = [], string $doctrineServiceName = 'doctObjMngr')
     {
-        return $this->nativeSelect($sql, $errMsg, $paramsArr, 'update');
+        return $this->nativeSelect($sql, $errMsg, $paramsArr, 'update', $doctrineServiceName);
     }
 
-    public function nativeDelete($sql, $errMsg = null, $paramsArr = [])
+    public function nativeDelete($sql, $errMsg = null, $paramsArr = [], string $doctrineServiceName = 'doctObjMngr')
     {
-        return $this->nativeSelect($sql, $errMsg, $paramsArr, 'delete');
+        return $this->nativeSelect($sql, $errMsg, $paramsArr, 'delete', $doctrineServiceName);
     }
 
     public function generateJasperReport(

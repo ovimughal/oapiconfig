@@ -8,8 +8,14 @@
 
 namespace Oapiconfig\Gateway;
 
+use Laminas\Http\Response;
 use Oapiconfig\DI\ServiceInjector;
 use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
+use Oapiconfig\Services\OaclService;
+use Oapiconfig\Services\OapisecurityService;
+use Oapiconfig\Services\OConfigHighjackerService;
+use Oapiconfig\Services\OjwtizerService;
+use Oapiconfig\Services\OlanguageService;
 
 /**
  * Description of GateKeeper
@@ -19,77 +25,102 @@ use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
 class GateKeeper extends AbstractPlugin
 {
 
-    public function routeIdentifier(\Laminas\Mvc\MvcEvent $e)
+    public function routeIdentifier(\Laminas\Mvc\MvcEvent $e): Response
     {
         $this->injectServiceLocator($e);
-//        $this->appLanguage($e);
+        //        $this->appLanguage($e);
+        /**
+         * @var Response
+         */
         $res = $this->isApiKeyValid($e);
 
         $oConfigMngr = ServiceInjector::$serviceLocator->get('config')['oconfig_manager'];
         $loginEnabled = $oConfigMngr['settings']['enable_login'];
         $appDevEnv = $oConfigMngr['settings']['app_development_env'];
+        $openIdentityRoutes = $oConfigMngr['open_identity_routes'];
+        $openAccessRoutes = $oConfigMngr['open_access_routes'];
         define('ENV', is_bool($appDevEnv) ? $appDevEnv : true);
 
         if ($res->getStatusCode() == 200) {
             $fullRoute = $e->getRouteMatch()->getMatchedRouteName();
             $routeArr = explode('/', $fullRoute);
-            if ('login' != $routeArr[0]) {
+            $route = ($routeArr && count($routeArr)) ? $routeArr[0] : null;
+            if($route && !in_array($route, $openIdentityRoutes)){
+            // if ('login' != $routeArr[0]) {
                 if ($loginEnabled) {
-                    $res = $this->identify($e);
+                    $res = $this->identify();
                 }
                 if ($res->getStatusCode() == 200) {
-                    if ('token_reissue' != $routeArr[0]) {
+                    $res = $this->tenantScanner();
+                    if ($res->getStatusCode() == 200 && !in_array($route, $openAccessRoutes)) {
                         $res = $this->accessVerifier($e);
                     }
                 }
             }
             // $route = 'login/post' == $e->getRouteMatch()->getMatchedRouteName() ? 'login' : $e->getRouteMatch()->getMatchedRouteName();
-//            if ('login' != $route ||
-//                    (('login' == $route) &&
-//                    ('POST' != $e->getRequest()->getMethod()))
-//            ) {
-//                if($loginEnabled){
-//                $res = $this->identify($e);
-//                }
-//                if ($res->getStatusCode() == 200) {
-//                    $res = $this->accessVerifier($e);
-//                }
-//            }
+            //            if ('login' != $route ||
+            //                    (('login' == $route) &&
+            //                    ('POST' != $e->getRequest()->getMethod()))
+            //            ) {
+            //                if($loginEnabled){
+            //                $res = $this->identify($e);
+            //                }
+            //                if ($res->getStatusCode() == 200) {
+            //                    $res = $this->accessVerifier($e);
+            //                }
+            //            }
         }
 
         return $res;
     }
 
-    public function identify($e)
+    private function identify(): Response
     {
-        $sm = $e->getApplication()->getServiceManager();
-        $ojwtManager = $sm->get('Ojwtizer');
+        $ojwtManager = ServiceInjector::oJwtizer();
         return $ojwtManager->ojwtValidator();
     }
 
-    public function injectServiceLocator($e)
+    private function tenantScanner() : Response
+    {
+        $tenant = ServiceInjector::oTenant();
+        return $tenant->tenantIdentifier();
+        // $configHighjacker = ServiceInjector::oConfigHighjacker();
+        // // $configHighjacker = new OConfigHighjacker(ServiceInjector::$serviceLocator);
+        // return $configHighjacker->overrideDbConfig();
+    }
+
+    private function injectServiceLocator(\Laminas\Mvc\MvcEvent $e): void
     {
         ServiceInjector::$serviceLocator = $e->getApplication()->getServiceManager();
     }
 
-    public function isApiKeyValid($e)
+    private function isApiKeyValid(\Laminas\Mvc\MvcEvent $e): Response
     {
         $sm = $e->getApplication()->getServiceManager();
+        /**
+         * @var OapisecurityService
+         */
         $oapiSecurityManager = $sm->get('Oapisecurity');
         return $oapiSecurityManager->apiKeyScanner();
     }
 
-    public function accessVerifier($e)
+    private function accessVerifier(\Laminas\Mvc\MvcEvent $e): Response
     {
         $sm = $e->getApplication()->getServiceManager();
+        /**
+         * @var OaclService
+         */
         $oaclManager = $sm->get('Oacl');
         return $oaclManager->authorizationCheck($e);
     }
-    
-    public function appLanguage($e)
-    {
-        $sm = $e->getApplication()->getServiceManager();
-        $sm->get('Olanguage')::extractLanguage($sm);
-    }
 
+    // public function appLanguage(\Laminas\Mvc\MvcEvent $e): void
+    // {
+    //     $sm = $e->getApplication()->getServiceManager();
+    //     /**
+    //      * @var OlanguageService
+    //      */
+    //     $oLanguage = $sm->get('Olanguage');
+    //     $oLanguage::extractLanguage($sm);
+    // }
 }

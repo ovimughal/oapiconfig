@@ -110,6 +110,12 @@ function dataBaseConnection()
                 // MySQl Server Connection
                 $conn = $driverManager->getConnection('jdbc:mysql://' . $dbmsServer . '/' . $dataBaseName . '?zeroDateTimeBehavior=convertToNull', $dataBaseUser, $dataBasePassword);
                 break;
+            case 'pgsql':
+                // MySql Driver
+                $class->forName('org.postgresql.Driver');
+                // MySQl Server Connection
+                $conn = $driverManager->getConnection('jdbc:postgresql://' . $dbmsServer . '/' . $dataBaseName . '?zeroDateTimeBehavior=convertToNull', $dataBaseUser, $dataBasePassword);
+                break;
         }
     } catch (JavaException $exc) {
         throw new Exception('Database Connection Exception: ' . $exc);

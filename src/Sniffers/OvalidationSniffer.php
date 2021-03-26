@@ -49,9 +49,36 @@ class OvalidationSniffer extends OhandlerBaseProvider
         return $res;
     }
 
-    public static function isEmail($dataArr)
+    public static function isEmail($dataList, $ignoreListRaw = null)
     {
-        
+        $flag = true;
+
+        if (is_array($dataList)) {
+
+            if (null != $ignoreListRaw) {
+                $ignoreList = array_flip($ignoreListRaw);
+                $data = array_diff_key($dataList, $ignoreList);
+            } else {
+                $data = $dataList;
+            }
+
+            foreach ($data as $key => $email) {
+                if (!(filter_var($email, FILTER_VALIDATE_EMAIL))) {
+                    $notEmail[] = $key;
+                    $flag = false;
+                    parent::setSuccess(false);
+                    parent::setMsg(json_encode($notEmail) . ' Need to be a valid email address but invalid email supplied');
+                }
+            }
+        } else {
+            if (!(filter_var($dataList, FILTER_VALIDATE_EMAIL))) {
+                $flag = false;
+                parent::setSuccess(false);
+                parent::setMsg(json_encode($dataList) . ' Need to be a valid email address but invalid email supplied');
+            }
+        }
+
+        return $flag;
     }
 
     public static function isInt($dataList, $ignoreListRaw = null)
@@ -160,7 +187,7 @@ class OvalidationSniffer extends OhandlerBaseProvider
             if (!strtotime($date)) {
                 $flag = false;
                 parent::setSuccess(false);
-                parent::setMsg(json_encode($data) . ' Need To Be A Date But No Valid Date Supplied');
+                parent::setMsg(json_encode($date) . ' Need To Be A Date But No Valid Date Supplied');
             }
         }
 

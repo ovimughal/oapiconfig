@@ -9,6 +9,7 @@
 namespace Oapiconfig\Services;
 
 use Interop\Container\ContainerInterface;
+use Laminas\Http\Request;
 
 /**
  * Description of OlanguageService
@@ -18,31 +19,38 @@ use Interop\Container\ContainerInterface;
 class OlanguageService
 {
 
-    private $language = null;
-    private $container;
+    private ?string $language = null;
+    private ContainerInterface $container;
 
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
     }
 
-    private function extractLanguage()
+    private function extractLanguage() : void
     {
+        /**
+         * @var Request
+         */
         $request = $this->container->get('Request');
         $languageHeader = $request->getHeader('X-Language');
 
         if ($languageHeader) {
-            list($language) = sscanf($languageHeader->toString(), 'X-Language: %s');
-            $this->setLanguage($language);
+            list($language) = sscanf($languageHeader->toString(), 'X-Language: %s');            
         }
+        else {
+            $language = 'en';
+        }
+
+        $this->setLanguage($language);
     }
 
-    private function setLanguage($language)
+    private function setLanguage(string $language) : void
     {
         $this->language = $language;
     }
 
-    public function getLanguage()
+    public function getLanguage() : ?string 
     {
         $this->extractLanguage();
         return $this->language;
