@@ -8,6 +8,9 @@
 
 namespace Oapiconfig\Services;
 
+use Doctrine\ORM\EntityManager;
+use Interop\Container\ContainerInterface;
+
 /**
  * Description of OormService
  *
@@ -15,36 +18,43 @@ namespace Oapiconfig\Services;
  */
 class OormService
 {
-    private $serviceLocator;   
+    private ContainerInterface $serviceLocator;   
     
-    public function __construct($serviceLocator)
+    public function __construct(ContainerInterface $serviceLocator)
     {
         $this->serviceLocator = $serviceLocator;
     }
     
-    public function getServiceLocator(){
+    public function getServiceLocator() : ContainerInterface
+    {
         return $this->serviceLocator;
     }
     
-    public function entityHydrator($dataArr, $entity)
+    public function entityHydrator(array $dataArr, object $entity, string $doctrineServiceName = 'doctObjMngr') : OhydrationService
     {
+        /**
+         * @var OhydrationService
+         */
         $hydrator = $this->getServiceLocator()->get('Ohydration');
-        $hydrator($dataArr, $entity);
+        $hydrator($dataArr, $entity, $doctrineServiceName);
 
         return $hydrator;
     }
     
-    public function getDoctObjMngr()
+    public function getDoctObjMngr(string $doctrineServiceName = 'doctObjMngr') : EntityManager
     {
-        $doctObjMngr = $this->getServiceLocator()->get('doctObjMngr');
+        /**
+         * @var EntityManager
+         */
+        $doctObjMngr = $this->getServiceLocator()->get($doctrineServiceName);
         return $doctObjMngr;
     }
     
-    public function getEntityPath()
+    public function getEntityPath(string $ormConfig = 'orm_default_path') : string
     {
         $oconfig = $this->getServiceLocator()->get('config');
         $entities = $oconfig['oconfig_manager']['entities'];
-        $path = $entities['path'];
+        $path = $entities[$ormConfig];
         return $path;
     }
 }

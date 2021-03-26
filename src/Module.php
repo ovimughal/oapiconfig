@@ -10,6 +10,7 @@
 
 namespace Oapiconfig;
 
+use Laminas\Http\Request;
 use Laminas\Mvc\MvcEvent;
 
 class Module
@@ -37,7 +38,11 @@ class Module
 
     public function onBootstrap(MvcEvent $e)
     {
-        if($e->getRequest()->getMethod() == 'OPTIONS'){
+        /**
+         * @var Request
+         */
+        $req = $e->getRequest();
+        if($req->getMethod() == 'OPTIONS'){
            die();
         }
         // You may not need to do this if you're doing it elsewhere in your
@@ -145,7 +150,7 @@ class Module
     {
         return array(
             'factories' => array(
-                'doctObjMngr' => function($sm) {
+                'masterDoctObjMngr' => function($sm) {
                     $em = $sm->get('Doctrine\ORM\EntityManager');
                     return $em;
                 }

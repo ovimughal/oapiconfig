@@ -177,17 +177,27 @@ class OfilemanagerService extends OhandlerBaseProvider
 
     public function getSecureHyperlinkKey()
     {
-        $keySeperatorSalt = $this->getConfigValue('hyperlink_security_salt', 'api');
-        $apiKeySecurityOne = $this->getConfigValue('hyperlink_api_key_security_one', 'api');
-        $apiKeySecurityTwo = $this->getConfigValue('hyperlink_api_key_security_two', 'api');
-        $apiKey = $this->getConfigValue('api_key', 'api');
-        $jwt = ServiceInjector::oJwtizer()->getOjwt();
+        $encodedSecureKey = ServiceInjector::oEncryption()->hyperlinkEncodedKey();
+        // $keySeperatorSalt = $this->getConfigValue('hyperlink_security_salt', 'api');
+        // $apiKeySecurityOne = $this->getConfigValue('hyperlink_api_key_security_one', 'api');
+        // $apiKeySecurityTwo = $this->getConfigValue('hyperlink_api_key_security_two', 'api');
+        // $apiKey = $this->getConfigValue('api_key', 'api');
+        // $jwt = ServiceInjector::oJwtizer()->getOjwt();
 
-        $secureKey = $apiKeySecurityOne . $apiKey . $apiKeySecurityTwo . $keySeperatorSalt . $jwt;
+        // $secureKey = $apiKeySecurityOne . $apiKey . $apiKeySecurityTwo . $keySeperatorSalt . $jwt;
 
-        $encodedSecureKey = base64_encode($secureKey);
+        // $encodedSecureKey = base64_encode($secureKey);
 
-        return 'key=' . $encodedSecureKey;
+        $secureKey = '';
+
+        if(ServiceInjector::oTenant()->isMultitenancyEnabled()){
+            $orgQueryString = $this->organizationId(true);
+            $secureKey .= $orgQueryString.'&';
+        }
+
+        $secureKey .= 'key=' . $encodedSecureKey;
+
+        return $secureKey;
     }
 
     public function getFileDownloadLink($routeResource, $filename, $format = null)

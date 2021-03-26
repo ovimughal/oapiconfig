@@ -69,13 +69,14 @@ class OapisecurityService extends OapisecurityServiceBaseProvider
     
     public function keyDecoder($encodedKey)
     {
-        $keySeperator = ServiceInjector::oFileManager()->getConfigValue('hyperlink_security_salt','api');
-        $baseDecodedKey = base64_decode($encodedKey);
-        list($salted_api_key,$jwt) = explode($keySeperator, $baseDecodedKey);
+        list($api_key, $jwt) = ServiceInjector::oEncryption()->hyperlinkDecodedKey($encodedKey);
+        // $keySeperator = ServiceInjector::oFileManager()->getConfigValue('hyperlink_security_salt','api');
+        // $baseDecodedKey = base64_decode($encodedKey);
+        // list($salted_api_key,$jwt) = explode($keySeperator, $baseDecodedKey);
         
         $this->setAuthToken($jwt);
         
-        $api_key = substr($salted_api_key, 5, -5);
+        // $api_key = substr($salted_api_key, 5, -5);
         
         return $api_key;
     }

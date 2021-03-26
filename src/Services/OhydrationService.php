@@ -86,10 +86,9 @@ class OhydrationService
      * @param  array $data Will receive data values
      * 
      * @return null
-     * @throws Does not throws any exception
      * @access public
      */
-    public function setData($data)
+    public function setData(array $data)
     {
         $this->data = (array) $data;
     }
@@ -105,12 +104,9 @@ class OhydrationService
      * @since 1.0 Added the $entity argument
      * 
      * @param  object $entity Will receive an entity
-     * 
-     * @return null
-     * @throws Does not throws any exception
      * @access public
      */
-    public function setEntity($entity)
+    public function setEntity(object $entity)
     {
         $this->entity = $entity;
     }
@@ -124,13 +120,16 @@ class OhydrationService
      * 
      * @since 1.0 Added the getHydrator() method
      * 	
-     * @return $hydrator object
-     * @throws Does not throws any exception
+     * @param  ?string $doctrineServiceName
+     * @return HydratorDoctrineObject
      * @access public
      */
-    public function getHydrator()
+    public function getHydrator(?string $doctrineServiceName = null) : HydratorDoctrineObject
     {
-        $doctrineObject = $this->getServiceLocator()->get('doctObjMngr');
+        if (null === $doctrineServiceName) {
+            $doctrineServiceName = 'doctObjMngr';
+        }
+        $doctrineObject = $this->getServiceLocator()->get($doctrineServiceName);
         $hydrator = new HydratorDoctrineObject($doctrineObject);
         return $hydrator;
     }
@@ -143,15 +142,12 @@ class OhydrationService
      * @author OwaisMughal <omughal@stc.in>
      * 
      * @since 1.0 Added the hydrateEntity() method
-     * 	
-     * @return null
-     * @throws Does not throws any exception
+     * @param ?string $doctrineServiceName
      * @access public
      */
-    public function hydrateEntity()
+    public function hydrateEntity(?string $doctrineServiceName = null)
     {
-
-        $hydrator = $this->getHydrator();
+        $hydrator = $this->getHydrator($doctrineServiceName);
         $hydrator->hydrate($this->data, $this->entity);
     }
 
@@ -168,18 +164,16 @@ class OhydrationService
      * 
      * @param  array $dataArr will receive data values	
      * @param  object $entity will receive an entity
-     * 
-     * @return null
-     * @throws Does not throws any exception
+     * @param  ?string $doctrineServiceName
      * @access public
      */
-    public function __invoke($dataArr = null, $entity = null)
+    public function __invoke(array $dataArr = null, object $entity = null, ?string $doctrineServiceName = null)
     {
         if ($dataArr != null && $entity != null) {
             $this->setData($dataArr);
             $this->setEntity($entity);
 
-            $this->hydrateEntity();
+            $this->hydrateEntity($doctrineServiceName);
         }
     }
 

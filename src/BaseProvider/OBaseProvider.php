@@ -18,6 +18,8 @@ use Oapiconfig\DI\ServiceInjector;
 class OBaseProvider
 {
 
+    private static $organizationId = null;
+
     public static function getOserviceLocator()
     {
         return ServiceInjector::$serviceLocator;
@@ -31,6 +33,37 @@ class OBaseProvider
     public function getOconfigManager()
     {
         return $this->getOconfig()['oconfig_manager'];
+    }
+
+    public function appUrl()
+    {
+        return $this->getOconfigManager()['settings']['app_url'];
+    }
+
+    public function apiUrl()
+    {
+        return $this->getOconfigManager()['settings']['api_url'];
+    }
+
+    public function setOrganizationId($id)
+    {
+        self::$organizationId = $id;
+    }
+
+    public function organizationId(bool $asQueryString = false)
+    {
+        $req = self::getOserviceLocator()->get('Request');
+        $tenantIdName = $this->getOconfigManager()['tenant']['tenant_id_name'];
+        $organizationId = (int)$req->getQuery($tenantIdName);
+
+        if (!$organizationId) {
+            $organizationId = self::$organizationId??$organizationId;
+        }
+
+        if ($asQueryString) {
+            $organizationId = $tenantIdName.'='.$organizationId;
+        }
+        return $organizationId;
     }
 
 }
