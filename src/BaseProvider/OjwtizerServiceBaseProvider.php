@@ -18,8 +18,10 @@ use Interop\Container\ContainerInterface;
 class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
 {
     private ?ContainerInterface $sl;
-    private string $key;
-    private string $algo;
+    private ?string $key;
+    private ?string $algo;
+    private string $localKey;
+    private string $localAlgo;
     private ?array $data;
     private string $server;
     private int $iatOffset;
@@ -28,14 +30,29 @@ class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
     private ?string $oJwt;
     private ?int $oJwtExpiresIn;
     private ?array $tenantInfo;
+    private ?string $ssoProvider;
+    private bool $isSso;
+    private array $config;
 
     public function __construct(ContainerInterface $sl, array $config)
     {
         parent::__construct();
         
+        $this->config = $config;
         $this->setSl($sl);
-        $this->setKey($config['jwt_key']);
-        $this->setAlgo($config['algo']);
+        $this->setIsSso(false);
+        $this->init();
+    }
+
+    public function init()
+    {
+        $config = $this->config;
+
+        $this->setSsoProvider();
+        $this->setKey($config);
+        $this->setAlgo($config);
+        $this->setLocalKey($config['jwt_key']);
+        $this->setLocalAlgo($config['algo']);
         $this->setServer($config['server']);
         $this->setIatOffset($config['iatOffset']);
         $this->setExpOffset($config['expOffset']);
@@ -124,9 +141,33 @@ class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
         return isset($this->oJwtExpiresIn) ? $this->oJwtExpiresIn - time() : null;
     }
 
-    public function setKey(string $key)
+    public function setLocalKey($localKey)
     {
-        $this->key = $key;
+        $this->localKey = $localKey;
+    }
+    
+    public function getLocalKey()
+    {
+        return isset($this->localKey) ? $this->localKey : 'My_Secret_Key';
+    }
+
+    public function setLocalAlgo($localAlgo)
+    {
+        $this->localAlgo = $localAlgo;
+    }
+    
+    public function getLocalAlgo()
+    {
+        return isset($this->localAlgo) ? $this->localAlgo : 'HS512';
+    }
+
+    public function setKey(array $config)
+    {
+        
+        // $this->key = $config['jwt_key'];
+        if ($this->getIsSso()) {
+            $this->key = $config[$this->getSsoProvider().'_key'];
+        }
     }
     
     public function getKey() : string
@@ -134,9 +175,13 @@ class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
         return isset($this->key) ? $this->key : 'My_Secret_Key';
     }
 
-    public function setAlgo(string $algo)
+    public function setAlgo(array $config)
     {
-        $this->algo = $algo;
+        $this->algo = $config['algo'];
+
+        if ($this->getIsSso()) {
+            $this->algo = $config[$this->getSsoProvider().'_algo'];
+        }
     }
     
     public function getAlgo() : string
@@ -182,5 +227,39 @@ class OjwtizerServiceBaseProvider extends OhandlerBaseProvider
     public function getTenantInfo() : ?array
     {
         return isset($this->tenantInfo) ? $this->tenantInfo : null;
+    }
+
+    public function setSsoProvider(?string $ssoProvider = null)
+    {
+        $this->ssoProvider = $ssoProvider;
+        if($this->getIsSso()){
+        /**
+         * @var Request
+         */
+        $req = $this->getSl()->get('Request');
+        $ssoHeader = $req->getHeader('X-SSO');
+        if ($ssoHeader) {
+            list($ssoProvider) = sscanf($ssoHeader->toString(), 'X-Sso: %s');
+            $this->ssoProvider = $ssoProvider;
+        }
+    }
+    }
+    
+    public function getSsoProvider() : ?string
+    {
+        return isset($this->ssoProvider) ? $this->ssoProvider : null;
+    }
+
+
+    public function getIsSso()
+    {
+        return $this->isSso;
+    }
+
+    public function setIsSso($isSso)
+    {
+        $this->isSso = $isSso;
+
+        return $this;
     }
 }

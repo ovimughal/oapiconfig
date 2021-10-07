@@ -37,21 +37,31 @@ class GateKeeper extends AbstractPlugin
         $oConfigMngr = ServiceInjector::$serviceLocator->get('config')['oconfig_manager'];
         $loginEnabled = $oConfigMngr['settings']['enable_login'];
         $appDevEnv = $oConfigMngr['settings']['app_development_env'];
+        $multitenancyEnabled = $oConfigMngr['settings']['enable_multitenancy'];
         $openIdentityRoutes = $oConfigMngr['open_identity_routes'];
         $openAccessRoutes = $oConfigMngr['open_access_routes'];
+        $ssoRoutes = $oConfigMngr['sso_routes'];
         define('ENV', is_bool($appDevEnv) ? $appDevEnv : true);
 
         if ($res->getStatusCode() == 200) {
             $fullRoute = $e->getRouteMatch()->getMatchedRouteName();
             $routeArr = explode('/', $fullRoute);
             $route = ($routeArr && count($routeArr)) ? $routeArr[0] : null;
-            if($route && !in_array($route, $openIdentityRoutes)){
-            // if ('login' != $routeArr[0]) {
+            if ($route && !in_array($route, $openIdentityRoutes)) {
+                // if ('login' != $routeArr[0]) {
                 if ($loginEnabled) {
-                    $res = $this->identify();
+                    $isSSO = in_array($route, $ssoRoutes);
+                    $res = $this->identify($isSSO);
+                    // /**
+                    //  * @var Request
+                    //  */
+                    // $req = ServiceInjector::$serviceLocator->get('Request');
+                    // $isSSO = in_array($route, $ssoRoutes); //ServiceInjector::oJwtizer()->getSsoProvider();
                 }
-                if ($res->getStatusCode() == 200) {
-                    $res = $this->tenantScanner();
+                if ($res->getStatusCode() == 200 && !$isSSO) {
+                    if ($multitenancyEnabled) {
+                        $res = $this->tenantScanner();
+                    }
                     if ($res->getStatusCode() == 200 && !in_array($route, $openAccessRoutes)) {
                         $res = $this->accessVerifier($e);
                     }
@@ -74,13 +84,15 @@ class GateKeeper extends AbstractPlugin
         return $res;
     }
 
-    private function identify(): Response
+    private function identify($isSSO): Response
     {
         $ojwtManager = ServiceInjector::oJwtizer();
+        $ojwtManager->setIsSso($isSSO);
+        $ojwtManager->init();
         return $ojwtManager->ojwtValidator();
     }
 
-    private function tenantScanner() : Response
+    private function tenantScanner(): Response
     {
         $tenant = ServiceInjector::oTenant();
         return $tenant->tenantIdentifier();

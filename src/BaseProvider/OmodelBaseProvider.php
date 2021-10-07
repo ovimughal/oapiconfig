@@ -231,7 +231,8 @@ class OmodelBaseProvider extends OhandlerBaseProvider
         string $language = null,
         array $properties = [],
         bool $generateNew = false,
-        bool $throwExc = false
+        bool $throwExc = false,
+        array $printCopies = ['Original']
     ) {
         try {
             //        $class_name = '\GlobalProcedure\Model\GlobalProcedureModel';
@@ -255,7 +256,8 @@ class OmodelBaseProvider extends OhandlerBaseProvider
                 $outputFormat,
                 $language,
                 $properties,
-                $generateNew
+                $generateNew,
+                $printCopies
             );
         } catch (Exception $exc) {
             if ($throwExc) {

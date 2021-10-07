@@ -22,7 +22,9 @@ function initSetup($language, $properties)
     // set language
     $GLOBALS['language'] = $language;
     // set filname that will be generated
-    $GLOBALS['outputFileName'] = $properties['outputFileName'];
+    $orgId = ServiceInjector::oFileManager()->organizationId();
+    $output_unique_key = time();
+    $GLOBALS['outputFileName'] = $orgId . '_' . $output_unique_key . '_' . $properties['outputFileName'];
     // set template directory to be used where jrxml reports are available
     $GLOBALS['templateDir'] = getcwd() . '/' . ServiceInjector::oFileManager()->getConfigValue('reporting_templates_' . $language);
     // set the directory where output file with the name set above is generated
@@ -39,7 +41,8 @@ function executeJasper(
     $outputFormat = 'pdf',
     $language = 'en',
     $properties = [],
-    $generateNew = false
+    $generateNew = false,
+    $printCopies = ['Original']
 ) {
     try {
         // initialize
@@ -58,14 +61,30 @@ function executeJasper(
         $fillManager = new JavaClass('net.sf.jasperreports.engine.JasperFillManager');
 
         // Fill with compiled Report, Params & database connection object
-        $jasperPrint = $fillManager->fillReport($report, $params, $conn);
+        // Normal single print usage
+        // $jasperPrint = $fillManager->fillReport($report, $params, $conn);
+
+        // List usage to print multiple copies
+        $jasperPrintList = new Java('java.util.ArrayList');
+        foreach ($printCopies as $value){
+            // Will be printed on report head whether duplicate or triplicate
+            if (count($printCopies) === 1) {
+                $value = '';
+            }
+            $params->put('reportType', $value);
+             // Fill with compiled Report, Params & database connection object
+            $jasperPrint = $fillManager->fillReport($report, $params, $conn);
+            $jasperPrintList->add($jasperPrint);
+        }
 
         // Export report to pdf, html, csv etc or generate to png, jpg etc
         if ($generateNew) {
             $GLOBALS['outputDir'] = getcwd() . '/' . ServiceInjector::oFileManager()->getConfigValue('reporting_templates_img_output');
             $result = generateNewOutput($jasperPrint, $outputFormat);
         } else {
-            $result = exportOutput($jasperPrint, $outputFormat);
+            // Usage without List
+            // $result = exportOutput($jasperPrint, $outputFormat);
+            $result = exportOutput($jasperPrintList, $outputFormat);
         }
 
         //$url = $_SERVER['HTTP_REFERER'];
@@ -76,6 +95,8 @@ function executeJasper(
         //unlink($outputPath);
     } catch (Exception $exc) {
         throw new Exception('Execute Exception: ' . $exc);
+    } finally {        
+        $conn->close();
     }
     return $result;
 }
@@ -225,7 +246,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $exporter->setParameter(java('net.sf.jasperreports.engine.export.JRXlsExporterParameter')->IS_ONE_PAGE_PER_SHEET, java('java.lang.Boolean')->TRUE);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.export.JRXlsExporterParameter')->IS_WHITE_PAGE_BACKGROUND, java('java.lang.Boolean')->FALSE);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.export.JRXlsExporterParameter')->IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS, java('java.lang.Boolean')->TRUE);
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 //header('Content-type: application/vnd.ms-excel');
@@ -238,7 +260,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $exporter->setParameter(java('net.sf.jasperreports.engine.export.JRCsvExporterParameter')->FIELD_DELIMITER, ',');
                 $exporter->setParameter(java('net.sf.jasperreports.engine.export.JRCsvExporterParameter')->RECORD_DELIMITER, '\n');
                 $exporter->setParameter(java('net.sf.jasperreports.engine.export.JRCsvExporterParameter')->CHARACTER_ENCODING, 'UTF-8');
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 //header('Content-type: application/csv');
@@ -248,7 +271,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $outputPath = $outputDir . '/' . $outputFileName . '.docx';
 
                 $exporter = new java('net.sf.jasperreports.engine.export.ooxml.JRDocxExporter');
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 //header('Content-type: application/vnd.ms-word');
@@ -258,7 +282,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $outputPath = $outputDir . '/' . $outputFileName . '.html';
 
                 $exporter = new java('net.sf.jasperreports.engine.export.HtmlExporter');
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 break;
@@ -266,7 +291,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $outputPath = $outputDir . '/' . $outputFileName . '.pdf';
 
                 $exporter = new java('net.sf.jasperreports.engine.export.JRPdfExporter');
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 //        header('Content-type: application/pdf');
@@ -276,7 +302,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $outputPath = $outputDir . '/' . $outputFileName . '.ods';
 
                 $exporter = new java('net.sf.jasperreports.engine.export.oasis.JROdsExporter');
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 //        header('Content-type: application/vnd.oasis.opendocument.spreadsheet');
@@ -286,7 +313,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $outputPath = $outputDir . '/' . $outputFileName . '.odt';
 
                 $exporter = new java('net.sf.jasperreports.engine.export.oasis.JROdtExporter');
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 //        header('Content-type: application/vnd.oasis.opendocument.text');
@@ -298,7 +326,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $exporter = new java('net.sf.jasperreports.engine.export.JRTextExporter');
                 $exporter->setParameter(java('net.sf.jasperreports.engine.export.JRTextExporterParameter')->PAGE_WIDTH, 120);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.export.JRTextExporterParameter')->PAGE_HEIGHT, 60);
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 //        header('Content-type: text/plain');
@@ -307,7 +336,8 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $outputPath = $outputDir . '/' . $outputFileName . '.rtf';
 
                 $exporter = new java('net.sf.jasperreports.engine.export.JRRtfExporter');
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 //        header('Content-type: application/rtf');
@@ -317,15 +347,31 @@ function exportOutput($jasperPrint, $outputFormat = 'pdf')
                 $outputPath = $outputDir . '/' . $outputFileName . '.pptx';
 
                 $exporter = new java('net.sf.jasperreports.engine.export.ooxml.JRPptxExporter');
-                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                // $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT, $jasperPrint);
+                $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->JASPER_PRINT_LIST, $jasperPrint);
                 $exporter->setParameter(java('net.sf.jasperreports.engine.JRExporterParameter')->OUTPUT_FILE_NAME, $outputPath);
 
                 //        header('Content-type: aapplication/vnd.ms-powerpoint');
                 //        header('Content-Disposition: attachment; filename=' .$outputFileName. '.pptx');
                 break;
         }
+        //generate report
         $exporter->exportReport();
-        //        $ouputFileName = ServiceInjector::oFileManager()->getConfigValue('output_file_name');
+
+        // Change file permissions so that it is readable
+        $file = new Java('java.io.File', $outputPath);
+        // if second arg is set to true or ignored it mean owner only
+        // false means for everyone
+        // $file->setExecutable(true, false);
+        $file->setReadable(true, false);
+        $file->setWritable(true, false);
+
+        // Clean up generated reports older than 2 days
+        $cmd = "find $outputDir -type f -name '*_report.pdf' -mmin +15 -delete";
+        $cmdRslt = exec($cmd, $output, $tsltCode);
+
+        // outputFileName is the name that is used when downloading the file
+        // $ouputFileName = ServiceInjector::oFileManager()->getConfigValue('output_file_name');       
         $routeResource = 'reporting_file_download_route';
         $result = ServiceInjector::oFileManager()->getFileDownloadLink($routeResource, $outputFileName, $outputFormat); //'Report Generated Successfully';
     } catch (JavaException $exc) {
@@ -343,9 +389,9 @@ function generateNewOutput($jasperPrint, $outputFormat = 'png')
         $outputPath = $outputDir . '/' . $fileName;
 
         $file = new Java('java.io.File', $outputPath);
-        $file->setExecutable(true, false); /*(executeable,owneronly)**/
-        $file->setReadable(true, false);
-        $file->setWritable(true, false);
+//        $file->setExecutable(true, false); /*(executeable,owneronly)**/
+//        $file->setReadable(true, false);
+//        $file->setWritable(true, false);
 
         $fileOutputStream = new Java('java.io.FileOutputStream', $file);
         $printContext = (new Java('net.sf.jasperreports.engine.DefaultJasperReportsContext'))->getInstance();

@@ -45,6 +45,11 @@ class OBaseProvider
         return $this->getOconfigManager()['settings']['api_url'];
     }
 
+    public function apiKey()
+    {
+        return $this->getOconfigManager()['api']['api_key'];
+    }
+
     public function setOrganizationId($id)
     {
         self::$organizationId = $id;

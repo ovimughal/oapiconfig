@@ -13,6 +13,14 @@ namespace Oapiconfig\BaseProvider;
  *
  * @author OviMughal
  */
+
+ /**
+  * TODO: Might need to remove this class as have added apiKey() method in
+  * OBaseProvider and can directly use that method now. Once this class is 
+  * is removed we need to directly extend OHandlerBaseProvider or OBaseProvider
+  * in OapisecurityService & use apiKey() method instead of getApiKey() method
+  */
+
 class OapisecurityServiceBaseProvider extends OBaseProvider
 {
     private $apiKey;

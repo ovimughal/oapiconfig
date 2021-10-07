@@ -65,7 +65,7 @@ class OConfigHighjackerService
                     )
                 ];
 
-                $oconfig['oconfig_manager']['settings']['dbms_server'] = $host;
+                $oconfig['oconfig_manager']['settings']['dbms_server'] = $host.':'.$port;
                 $oconfig['oconfig_manager']['settings']['data_base_name'] = $database;
                 $oconfig['oconfig_manager']['settings']['data_base_user'] = $username;
                 $oconfig['oconfig_manager']['settings']['data_base_password'] = $password;

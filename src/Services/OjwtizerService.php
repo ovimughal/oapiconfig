@@ -30,12 +30,12 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
         $jwt = JWT::encode(
             $this->getPayload(),
             $this->getSaltedKey(),
-            $this->getAlgo()
+            $this->getLocalAlgo()
         );
         return $jwt;
     }
 
-    public function oJwtify(array $userData, array $tenantData = null): void
+    public function oJwtify(array $userData, array $tenantData = null): array
     {
         /**
          * @var Response
@@ -47,16 +47,20 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
         $this->setOjwt($this->ojwtGenerator());
         $oJwt = $this->getOjwt();
         $oJwtExpiresIn = $this->getOjwtExpiresIn();
+        $tokenData = [];
         if (null != $oJwt) {
-            $res->getHeaders()->addHeaderLine('X-Auth-Token', json_encode([
+            $tokenData = [
                 'access_token' => $oJwt,
                 'token_type' => 'jwt',
                 'expires_in' => $oJwtExpiresIn
-            ]));
+            ];
+            $res->getHeaders()->addHeaderLine('X-Auth-Token', json_encode($tokenData));
         }
+
+        return $tokenData;
     }
 
-    public function ojwtValidator() : Response
+    public function ojwtValidator(): Response
     {
         /**
          * @var Response
@@ -75,10 +79,13 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
                 $this->setOjwt($jwt); // sets user sent jwt everytime. Done only for hyperlinkEncodedKey() method
                 try {
                     // Adjust colck skew since angular app & apis are at different locations
-                    JWT::$leeway = 10;
-                    $token = JWT::decode($jwt, $this->getSaltedKey(), array($this->getAlgo()));
-                    $this->setUserInfo((array) $token->userData);
-                    $this->setTenantInfo((array) $token->tenantData);
+                    JWT::$leeway = 50;
+                    // $token = JWT::decode($jwt, $this->getKey(), array($this->getAlgo()));
+                    $token = (object)$this->tokenDecoder($jwt);
+                    // $this->setUserInfo((array) $token->userData);
+                    // $this->setTenantInfo((array) $token->tenantData);
+                    $this->setUserAndTenantData($token);
+                    $this->setSsoProvider($this->getUserInfo()['ssoProvider']);
                 } catch (ExpiredException $exExc) {
                     $res->setStatusCode(401); //unauthorized basically it means user is unauthenticated
                     $this->setSuccess(false);
@@ -106,12 +113,12 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
         return $res;
     }
 
-    public function getSaltedKey() : string
+    public function getSaltedKey(): string
     {
-        return $this->getKey() . $this->getTokenSalt() . $this->getServer();
+        return $this->getLocalKey() . $this->getTokenSalt() . $this->getServer();
     }
 
-    public function getTokenSalt() : string
+    public function getTokenSalt(): string
     {
         $config = parse_ini_file(__DIR__ . '/token.ini');
         $tokenSalt = $config['token_salt'];
@@ -119,7 +126,7 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
         return $tokenSalt;
     }
 
-    public function invalidateJWT() : void
+    public function invalidateJWT(): void
     {
         try {
 
@@ -133,6 +140,28 @@ class OjwtizerService extends OjwtizerServiceBaseProvider
             fclose($f);
         } catch (Exception $exc) {
             throw new Exception($exc);
+        }
+    }
+
+    public function tokenDecoder(string $jwt): object
+    {
+        $key = $this->getIsSso() ? $this->getKey() : $this->getSaltedKey();
+        return JWT::decode($jwt, $key, array($this->getAlgo()));
+    }
+
+    public function setUserAndTenantData(object $token)
+    {
+        if (
+            property_exists($token, 'userData') &&
+            property_exists($token, 'tenantData')
+        ) {
+            $this->setUserInfo((array) $token->userData);
+            $this->setTenantInfo((array) $token->tenantData);
+        } else {
+            // This process is used when loging in via SSO
+            // We are using email as username
+            $tenantData = ['tenantUser' => $token->email];
+            $this->setTenantInfo($tenantData);
         }
     }
 }
